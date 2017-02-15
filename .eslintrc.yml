@@ -1,0 +1,10 @@
+extends:
+  - seegno
+
+env:
+  jasmine: true
+  jest: true
+
+rules:
+  no-process-env: 0
+  no-process-exit: 0
