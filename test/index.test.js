@@ -167,6 +167,19 @@ describe('ProcessManager', () => {
 
       jest.runAllTimers();
     });
+
+    test('if a hook throws, it returns the error in an array', () => {
+      const error = new Error('foo');
+      const handler = () => { throw error; };
+      const name = 'disconnect';
+
+      processManager.addHook(name, handler);
+
+      return processManager.hook(name)
+        .then(errors => {
+          expect(errors).toContain(error);
+        });
+    });
   });
 
   describe('shutdown()', () => {
