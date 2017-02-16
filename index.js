@@ -27,7 +27,7 @@ function deferred() {
  */
 
 function reflect(thenable, args) {
-  return Promise.resolve(thenable(...args))
+  return new Promise(resolve => resolve(thenable(...args)))
     .then(_.noop, _.identity);
 }
 
