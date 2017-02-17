@@ -186,6 +186,10 @@ class ProcessManager {
     this.terminating = true;
     this.forceShutdown = deferred();
 
+    if (force) {
+      this.forceShutdown.reject();
+    }
+
     log.info('Starting shutdown.');
 
     Promise.race([Promise.all(this.running), this.forceShutdown.promise])
@@ -234,7 +238,7 @@ process.on('unhandledRejection', error => {
 process.on('uncaughtException', error => {
   log.info('Caught exception.', error);
 
-  processManager.shutdown({ error });
+  processManager.shutdown({ error, force: true });
 });
 
 /**

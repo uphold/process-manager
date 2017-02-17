@@ -195,6 +195,12 @@ describe('ProcessManager', () => {
       expect(processManager.forceShutdown.promise).toBeInstanceOf(Promise);
     });
 
+    test('with `force` set to `true` it creates `forceShutdown` promise in reject state', done => {
+      processManager.shutdown({ force: true });
+
+      processManager.forceShutdown.promise.catch(done);
+    });
+
     test('calls hook `disconnect`', done => {
       spyOn(processManager, 'hook').and.callThrough();
 
@@ -263,7 +269,7 @@ describe('ProcessManager', () => {
 
     test('forces shutdown if `processManager.shutdown` is called with force `true`', done => {
       spyOn(processManager, 'exit').and.callFake(() => {
-        done();
+        processManager.forceShutdown.promise.catch(done);
       });
 
       processManager.once(function *() {
@@ -462,7 +468,7 @@ describe('ProcessManager', () => {
       const error = new Error();
 
       process.once('uncaughtException', () => {
-        expect(processManager.shutdown).toBeCalledWith({ error });
+        expect(processManager.shutdown).toBeCalledWith({ error, force: true });
 
         done();
       });
