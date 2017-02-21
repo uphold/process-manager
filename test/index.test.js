@@ -5,6 +5,7 @@
  */
 
 const ProcessManager = require('..').constructor;
+const Promise = require('bluebird');
 
 /**
  * Test `ProcessManager`.
@@ -157,28 +158,14 @@ describe('ProcessManager', () => {
       jest.useFakeTimers();
 
       processManager.hook(type)
-      .then(result => {
+      .then(() => {
         expect(h1).not.toBeCalled();
-        expect(result.message).toBe(`Timeout: hook 'disconnect' took too long to run.`);
 
         jest.useRealTimers();
         done();
       });
 
       jest.runAllTimers();
-    });
-
-    test('if a hook throws, it returns the error in an array', () => {
-      const error = new Error('foo');
-      const handler = () => { throw error; };
-      const type = 'disconnect';
-
-      processManager.addHook(type, handler);
-
-      return processManager.hook(type)
-        .then(errors => {
-          expect(errors).toContain(error);
-        });
     });
   });
 
@@ -192,7 +179,7 @@ describe('ProcessManager', () => {
     test('creates `forceShutdown` promise', () => {
       processManager.shutdown();
 
-      expect(processManager.forceShutdown.promise).toBeInstanceOf(Promise);
+      expect(processManager.forceShutdown.promise.then).toBeDefined();
     });
 
     test('with `force` set to `true` it creates `forceShutdown` promise in reject state', done => {
@@ -284,13 +271,7 @@ describe('ProcessManager', () => {
         processManager.forceShutdown.promise.catch(done);
       });
 
-      processManager.once(function *() {
-        yield new Promise(resolve => {
-          setTimeout(() => {
-            resolve();
-          }, 5000);
-        });
-      });
+      processManager.loop(function *() {}, { interval: 1000 });
 
       processManager.shutdown();
       processManager.shutdown({ force: true });
@@ -405,7 +386,7 @@ describe('ProcessManager', () => {
 
         const chain = processManager.run(function *() {});
 
-        expect(chain).toBeInstanceOf(Promise);
+        expect(chain.then).toBeDefined();
         expect(typeof chain.id).toBe('symbol');
       });
 
