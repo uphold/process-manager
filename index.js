@@ -5,6 +5,7 @@
  */
 
 const _ = require('lodash');
+const Promise = require('bluebird');
 const co = require('co');
 const log = require('debugnyan')('process-manager');
 
@@ -28,7 +29,7 @@ function deferred() {
  */
 
 function reflect(thenable, args) {
-  return new Promise(resolve => resolve(thenable(...args)))
+  return Promise.try(() => thenable(...args))
     .then(_.noop, _.identity);
 }
 
@@ -94,12 +95,14 @@ class ProcessManager {
    */
 
   hook(type, ...args) {
-    return Promise.race([
-      Promise.all(_.map(_.filter(this.hooks, { type }), ({ handler }) => reflect(handler, args))),
-      new Promise(resolve => {
-        setTimeout(resolve, this.timeout, new Error(`Timeout: hook '${type}' took too long to run.`));
+    return Promise.map(_.filter(this.hooks, { type }), ({ handler }) => reflect(handler, args))
+      .timeout(this.timeout, type)
+      .catch(Promise.TimeoutError, error => {
+        this.errors.push(error);
+
+        log.info(`Timeout: hook '${type}' took too long to run.`);
       })
-    ]);
+      .then(errors => this.errors.push(..._.compact(errors)));
   }
 
   /**
@@ -114,7 +117,7 @@ class ProcessManager {
         yield func();
 
         if (!self.terminating) {
-          yield new Promise(resolve => setTimeout(resolve, interval));
+          yield Promise.delay(interval);
         }
       }
     });
@@ -192,17 +195,9 @@ class ProcessManager {
       .then(() => log.info('All running instances have stopped.'))
       .catch(() => log.info('Forced shutdown, skipped waiting for instances.'))
       .then(() => this.hook('drain'))
-      .then(errors => {
-        this.errors = _.compact(_.concat(this.errors, errors));
-
-        log.info(`${(this.hooks.drain || []).length} server(s) drained.`);
-      })
+      .then(() => log.info(`${_.filter(this.hooks, { type: 'drain' }).length} server(s) drained.`))
       .then(() => this.hook('disconnect'))
-      .then(errors => {
-        this.errors = _.compact(_.concat(this.errors, errors));
-
-        log.info(`${_.filter(this.hooks, { type: 'disconnect' }).length} service(s) disconnected.`);
-      })
+      .then(() => log.info(`${_.filter(this.hooks, { type: 'disconnect' }).length} service(s) disconnected.`))
       .then(() => this.hook('exit', this.errors))
       .then(() => this.exit());
   }
