@@ -94,7 +94,7 @@ class ProcessManager {
 
   hook(name, ...args) {
     return Promise.race([
-      Promise.all(_.map(this.hooks[name] || [], handler => reflect(handler, args))),
+      Promise.all(_.map(this.hooks[name], handler => reflect(handler, args))),
       new Promise(resolve => {
         setTimeout(resolve, this.timeout, new Error(`Timeout: hook '${name}' took too long to run.`));
       })
@@ -147,12 +147,7 @@ class ProcessManager {
     const id = Symbol();
     const chain = reflect(co.wrap(func), args)
       .then(error => {
-        const idx = this.running.findIndex(it => it.id === id);
-
-        /* istanbul ignore else */
-        if (idx !== -1) {
-          this.running.splice(idx, 1);
-        }
+        _.remove(this.running, { id });
 
         if (error || exit) {
           this.shutdown({ error });
@@ -205,7 +200,7 @@ class ProcessManager {
       .then(errors => {
         this.errors = _.compact(_.concat(this.errors, errors));
 
-        log.info(`${(this.hooks.disconnect || []).length} service(s) disconnected.`);
+        log.info(`${_.size(this.hooks.disconnect)} service(s) disconnected.`);
       })
       .then(() => this.hook('exit', this.errors))
       .then(() => this.exit());
