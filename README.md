@@ -143,8 +143,8 @@ If a hook takes longer than 30 seconds to return, it will timeout and continue w
 ```js
 const processManager = require('process-manager');
 
-processManager.addHook('<hook-name>', () => 'result');
-processManager.addHook('<hook-name>', () => Promise.resolve('result'));
+processManager.addHook('<hook-type>', () => 'result');
+processManager.addHook('<hook-type>', () => Promise.resolve('result'));
 ```
 
 ### drain

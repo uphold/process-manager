@@ -1,3 +1,4 @@
+'use strict';
 
 /**
  * Module dependencies.
@@ -43,7 +44,7 @@ class ProcessManager {
 
   constructor() {
     this.errors = [];
-    this.hooks = {};
+    this.hooks = [];
     this.running = [];
     this.terminating = false;
     this.timeout = 30000;
@@ -53,10 +54,10 @@ class ProcessManager {
    * Add hook.
    */
 
-  addHook(name, handler) {
-    (this.hooks[name] = _.get(this.hooks, name, [])).push(handler);
+  addHook(type, handler) {
+    this.hooks.push({ handler, type });
 
-    log.info(`New handler added for hook ${name}`);
+    log.info(`New handler added for hook ${type}`);
   }
 
   /**
@@ -92,11 +93,11 @@ class ProcessManager {
    * Call all handlers for a hook.
    */
 
-  hook(name, ...args) {
+  hook(type, ...args) {
     return Promise.race([
-      Promise.all(_.map(this.hooks[name], handler => reflect(handler, args))),
+      Promise.all(_.map(_.filter(this.hooks, { type }), ({ handler }) => reflect(handler, args))),
       new Promise(resolve => {
-        setTimeout(resolve, this.timeout, new Error(`Timeout: hook '${name}' took too long to run.`));
+        setTimeout(resolve, this.timeout, new Error(`Timeout: hook '${type}' took too long to run.`));
       })
     ]);
   }
@@ -200,7 +201,7 @@ class ProcessManager {
       .then(errors => {
         this.errors = _.compact(_.concat(this.errors, errors));
 
-        log.info(`${_.size(this.hooks.disconnect)} service(s) disconnected.`);
+        log.info(`${_.filter(this.hooks, { type: 'disconnect' }).length} service(s) disconnected.`);
       })
       .then(() => this.hook('exit', this.errors))
       .then(() => this.exit());

@@ -23,7 +23,7 @@ describe('ProcessManager', () => {
   describe('constructor()', () => {
     test('sets the initial state', () => {
       expect(processManager.errors).toEqual([]);
-      expect(processManager.hooks).toEqual({});
+      expect(processManager.hooks).toEqual([]);
       expect(processManager.running).toEqual([]);
       expect(processManager.terminating).toEqual(false);
       expect(processManager.timeout).toEqual(30000);
@@ -33,13 +33,13 @@ describe('ProcessManager', () => {
   describe('addHook()', () => {
     test('adds the given handler to the handlers list', () => {
       const handler = () => '';
-      const name = 'disconnect';
+      const type = 'disconnect';
 
-      expect(processManager.hooks).toEqual({});
+      expect(processManager.hooks).toEqual([]);
 
-      processManager.addHook(name, handler);
+      processManager.addHook(type, handler);
 
-      expect(processManager.hooks[name]).toEqual([handler]);
+      expect(processManager.hooks).toEqual([{ handler, type }]);
     });
   });
 
@@ -109,12 +109,12 @@ describe('ProcessManager', () => {
   describe('hook()', () => {
     test('calls all handlers for a given hook', () => {
       const [h1, h2] = [jest.fn(), jest.fn()];
-      const name = 'disconnect';
+      const type = 'disconnect';
 
-      processManager.addHook(name, h1);
-      processManager.addHook(name, h2);
+      processManager.addHook(type, h1);
+      processManager.addHook(type, h2);
 
-      return processManager.hook(name)
+      return processManager.hook(type)
       .then(() => {
         expect(h1).toBeCalled();
         expect(h2).toBeCalled();
@@ -123,12 +123,12 @@ describe('ProcessManager', () => {
 
     test(`doesn't call handlers that don't belong to a given hook`, () => {
       const [h1, h2] = [jest.fn(), jest.fn()];
-      const name = 'disconnect';
+      const type = 'disconnect';
 
-      processManager.addHook(name, h1);
+      processManager.addHook(type, h1);
       processManager.addHook('otherHook', h2);
 
-      return processManager.hook(name)
+      return processManager.hook(type)
       .then(() => {
         expect(h1).toBeCalled();
         expect(h2).not.toBeCalled();
@@ -137,11 +137,11 @@ describe('ProcessManager', () => {
 
     test('passes extra arguments to the handlers', () => {
       const h1 = jest.fn();
-      const name = 'disconnect';
+      const type = 'disconnect';
 
-      processManager.addHook(name, h1);
+      processManager.addHook(type, h1);
 
-      return processManager.hook(name, 'foobar')
+      return processManager.hook(type, 'foobar')
       .then(() => {
         expect(h1).toBeCalled();
         expect(h1).toBeCalledWith('foobar');
@@ -150,13 +150,13 @@ describe('ProcessManager', () => {
 
     test('resolves with a timeout if hook too long to finish', done => {
       const h1 = jest.fn();
-      const name = 'disconnect';
+      const type = 'disconnect';
 
-      processManager.addHook(name, () => new Promise(() => {}).then(h1));
+      processManager.addHook(type, () => new Promise(() => {}).then(h1));
 
       jest.useFakeTimers();
 
-      processManager.hook(name)
+      processManager.hook(type)
       .then(result => {
         expect(h1).not.toBeCalled();
         expect(result.message).toBe(`Timeout: hook 'disconnect' took too long to run.`);
@@ -171,11 +171,11 @@ describe('ProcessManager', () => {
     test('if a hook throws, it returns the error in an array', () => {
       const error = new Error('foo');
       const handler = () => { throw error; };
-      const name = 'disconnect';
+      const type = 'disconnect';
 
-      processManager.addHook(name, handler);
+      processManager.addHook(type, handler);
 
-      return processManager.hook(name)
+      return processManager.hook(type)
         .then(errors => {
           expect(errors).toContain(error);
         });
