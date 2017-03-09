@@ -147,9 +147,14 @@ processManager.addHook('<hook-name>', () => 'result');
 processManager.addHook('<hook-name>', () => Promise.resolve('result'));
 ```
 
+### drain
+
+This hook is called during shutdown, after all running processes have stopped. 
+It should be used to drain connections if the process is running a server.
+
 ### disconnect
 
-This hook is called during shutdown, after all running processes have stopped. This is where
+This hook is called after `drain` and it's where
 handlers should be added to close running services (ex.: database connections, persistent
 connections, etc).
 
