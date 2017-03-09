@@ -201,6 +201,18 @@ describe('ProcessManager', () => {
       processManager.forceShutdown.promise.catch(done);
     });
 
+    test('calls hook `drain`', done => {
+      spyOn(processManager, 'hook').and.callThrough();
+
+      processManager.addHook('drain', () => {
+        expect(processManager.hook).toBeCalledWith('drain');
+
+        done();
+      });
+
+      processManager.shutdown();
+    });
+
     test('calls hook `disconnect`', done => {
       spyOn(processManager, 'hook').and.callThrough();
 

@@ -195,6 +195,12 @@ class ProcessManager {
     Promise.race([Promise.all(this.running), this.forceShutdown.promise])
       .then(() => log.info('All running instances have stopped.'))
       .catch(() => log.info('Forced shutdown, skipped waiting for instances.'))
+      .then(() => this.hook('drain'))
+      .then(errors => {
+        this.errors = _.compact(_.concat(this.errors, errors));
+
+        log.info(`${(this.hooks.drain || []).length} server(s) drained.`);
+      })
       .then(() => this.hook('disconnect'))
       .then(errors => {
         this.errors = _.compact(_.concat(this.errors, errors));
