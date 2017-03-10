@@ -30,7 +30,6 @@
   "devDependencies": {
     "eslint": "^3.12.2",
     "eslint-config-seegno": "^8.0.1",
-    "github-changelog-generator": "git+ssh://git@github.com/uphold/github-changelog-generator#v0.3.0",
     "jest": "^18.0.0",
     "pre-commit": "^1.2.2"
   },
