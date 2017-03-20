@@ -56,8 +56,8 @@ class ProcessManager {
    * Add hook.
    */
 
-  addHook(type, handler) {
-    this.hooks.push({ handler, type });
+  addHook({ type, handler, name = 'a handler' }) {
+    this.hooks.push({ handler, name, timeoutError: new Promise.TimeoutError(`${name} took too long to complete ${type} hook`), type });
 
     log.info(`New handler added for hook ${type}`);
   }
@@ -96,12 +96,21 @@ class ProcessManager {
    */
 
   hook(type, ...args) {
-    return Promise.map(_.filter(this.hooks, { type }), ({ handler }) => reflect(handler, args))
-      .timeout(this.timeout, type)
-      .catch(Promise.TimeoutError, error => {
-        this.errors.push(error);
+    const hooks = _.filter(this.hooks, { type });
+    const promises = _.map(hooks, ({ handler }) => reflect(handler, args));
 
-        log.info(`Timeout: hook '${type}' took too long to run.`);
+    return Promise.all(promises)
+      .timeout(this.timeout, type)
+      .catch(Promise.TimeoutError, () => {
+        for (let i = 0; i < hooks.length; ++i) {
+          if (!promises[i].isPending()) {
+            continue;
+          }
+
+          this.errors.push(hooks[i].timeoutError);
+
+          log.info(`Timeout: ${hooks[i].name} took too long to complete ${type} hook`);
+        }
       })
       .then(errors => this.errors.push(..._.compact(errors)));
   }
