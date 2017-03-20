@@ -45,6 +45,7 @@ class ProcessManager {
 
   constructor() {
     this.errors = [];
+    this.forceShutdown = deferred();
     this.hooks = [];
     this.running = [];
     this.terminating = false;
@@ -174,7 +175,7 @@ class ProcessManager {
       this.errors.push(error);
     }
 
-    if (this.terminating && force) {
+    if (force) {
       this.forceShutdown.reject();
     }
 
@@ -183,22 +184,19 @@ class ProcessManager {
     }
 
     this.terminating = true;
-    this.forceShutdown = deferred();
-
-    if (force) {
-      this.forceShutdown.reject();
-    }
 
     log.info('Starting shutdown.');
 
-    Promise.race([Promise.all(this.running), this.forceShutdown.promise])
+    const gracefulShutdown = Promise.all(this.running)
       .then(() => log.info('All running instances have stopped.'))
-      .catch(() => log.info('Forced shutdown, skipped waiting for instances.'))
       .then(() => this.hook('drain'))
       .then(() => log.info(`${_.filter(this.hooks, { type: 'drain' }).length} server(s) drained.`))
       .then(() => this.hook('disconnect'))
       .then(() => log.info(`${_.filter(this.hooks, { type: 'disconnect' }).length} service(s) disconnected.`))
-      .then(() => this.hook('exit', this.errors))
+      .then(() => this.hook('exit', this.errors));
+
+    Promise.race([gracefulShutdown, this.forceShutdown.promise])
+      .catch(() => log.info('Forced shutdown, skipped waiting.'))
       .then(() => this.exit());
   }
 }
