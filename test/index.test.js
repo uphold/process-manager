@@ -24,6 +24,7 @@ describe('ProcessManager', () => {
   describe('constructor()', () => {
     test('sets the initial state', () => {
       expect(processManager.errors).toEqual([]);
+      expect(processManager.forceShutdown).toMatchObject({ promise: expect.any(Promise), reject: expect.any(Function), resolve: expect.any(Function) });
       expect(processManager.hooks).toEqual([]);
       expect(processManager.running).toEqual([]);
       expect(processManager.terminating).toEqual(false);
@@ -179,7 +180,7 @@ describe('ProcessManager', () => {
     test('creates `forceShutdown` promise', () => {
       processManager.shutdown();
 
-      expect(processManager.forceShutdown.promise.then).toBeDefined();
+      expect(processManager.forceShutdown.promise).toBeInstanceOf(Promise);
     });
 
     test('with `force` set to `true` it creates `forceShutdown` promise in reject state', done => {
