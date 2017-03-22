@@ -13,13 +13,13 @@ graceful shutdowns.
 Install the package via **yarn**:
 
 ```shell
-$ yarn add '@uphold/process-manager'
+❯ yarn add '@uphold/process-manager'
 ```
 
 Or **npm**:
 
 ```shell
-$ npm install '@uphold/process-manager' --save
+❯ npm install '@uphold/process-manager' --save
 ```
 
 ## Usage
@@ -163,10 +163,6 @@ connections, etc).
 This hook is called right before the process exits. It passes an array of errors as an argument
 to the handler function, and should be used to handle errors before exiting.
 
-## Compatibility
-
-`process-manager` requires node version 6 or higher to run.
-
 ## Debug
 
 Enable verbose debugging by setting the DEBUG environment variable to DEBUG=process-manager.
@@ -174,40 +170,19 @@ Enable verbose debugging by setting the DEBUG environment variable to DEBUG=proc
 ## Release
 
 ```shell
-$ npm version [<newversion> | major | minor | patch] -m "Release %s"`
+❯ npm version [<new version> | major | minor | patch] -m "Release %s"`
 ```
 ## Test
 
-To test using a local version of `node.js`, run:
+To test using a local version of `node`, run:
 
 ```sh
-$ yarn test
+❯ yarn test
 ```
 
-## Contributing and Development
+## License
 
-Found a bug or want to add more functionality? Take a look first on the current and closed
-[issues](https://github.com/uphold/process-manager/issues). If it is something new, please
-[submit an issue](https://github.com/uphold/process-manager/issues/new).
-
-## Licence
-
-Copyright 2017 Uphold, Inc.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
-OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+MIT
 
 [npm-image]: https://img.shields.io/npm/v/@uphold/process-manager.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/@uphold/process-manager
