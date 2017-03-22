@@ -13,13 +13,13 @@ graceful shutdowns.
 Install the package via **yarn**:
 
 ```shell
-$ yarn add '@uphold/process-manager'
+❯ yarn add '@uphold/process-manager'
 ```
 
 Or **npm**:
 
 ```shell
-$ npm install '@uphold/process-manager' --save
+❯ npm install '@uphold/process-manager' --save
 ```
 
 ## Usage
@@ -163,10 +163,6 @@ connections, etc).
 This hook is called right before the process exits. It passes an array of errors as an argument
 to the handler function, and should be used to handle errors before exiting.
 
-## Compatibility
-
-`process-manager` requires node version 6 or higher to run.
-
 ## Debug
 
 Enable verbose debugging by setting the DEBUG environment variable to DEBUG=process-manager.
@@ -174,21 +170,15 @@ Enable verbose debugging by setting the DEBUG environment variable to DEBUG=proc
 ## Release
 
 ```shell
-$ npm version [<newversion> | major | minor | patch] -m "Release %s"`
+❯ npm version [<new version> | major | minor | patch] -m "Release %s"`
 ```
 ## Test
 
-To test using a local version of `node.js`, run:
+To test using a local version of `node`, run:
 
 ```sh
-$ yarn test
+❯ yarn test
 ```
-
-## Contributing and Development
-
-Found a bug or want to add more functionality? Take a look first on the current and closed
-[issues](https://github.com/uphold/process-manager/issues). If it is something new, please
-[submit an issue](https://github.com/uphold/process-manager/issues/new).
 
 ## License
 
