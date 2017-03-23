@@ -194,18 +194,18 @@ class ProcessManager {
 
     this.terminating = true;
 
-    log.info('Starting shutdown.');
+    log.info('Starting shutdown');
 
     const gracefulShutdown = Promise.all(this.running)
-      .then(() => log.info('All running instances have stopped.'))
+      .then(() => log.info('All running instances have stopped'))
       .then(() => this.hook('drain'))
-      .then(() => log.info(`${_.filter(this.hooks, { type: 'drain' }).length} server(s) drained.`))
+      .then(() => log.info(`${_.filter(this.hooks, { type: 'drain' }).length} server(s) drained`))
       .then(() => this.hook('disconnect'))
-      .then(() => log.info(`${_.filter(this.hooks, { type: 'disconnect' }).length} service(s) disconnected.`))
+      .then(() => log.info(`${_.filter(this.hooks, { type: 'disconnect' }).length} service(s) disconnected`))
       .then(() => this.hook('exit', this.errors));
 
     Promise.race([gracefulShutdown, this.forceShutdown.promise])
-      .catch(() => log.info('Forced shutdown, skipped waiting.'))
+      .catch(() => log.info('Forced shutdown, skipped waiting'))
       .then(() => this.exit());
   }
 }
@@ -222,7 +222,7 @@ const processManager = new ProcessManager();
 
 // istanbul ignore next
 process.on('exit', code => {
-  log.info(`Exiting with status ${code}.`);
+  log.info(`Exiting with status ${code}`);
 });
 
 /**
@@ -230,7 +230,7 @@ process.on('exit', code => {
  */
 
 process.on('unhandledRejection', error => {
-  log.info('Caught rejection.', error);
+  log.info('Caught rejection', error);
 
   processManager.shutdown({ error });
 });
@@ -240,7 +240,7 @@ process.on('unhandledRejection', error => {
  */
 
 process.on('uncaughtException', error => {
-  log.info('Caught exception.', error);
+  log.info('Caught exception', error);
 
   processManager.shutdown({ error, force: true });
 });
@@ -250,7 +250,7 @@ process.on('uncaughtException', error => {
  */
 
 process.on('SIGINT', () => {
-  log.info('Caught SIGINT.');
+  log.info('Caught SIGINT');
 
   processManager.shutdown({ force: processManager.terminating });
 });
@@ -260,12 +260,12 @@ process.on('SIGINT', () => {
  */
 
 process.on('SIGTERM', () => {
-  log.info('Caught SIGTERM.');
+  log.info('Caught SIGTERM');
 
   processManager.shutdown();
 });
 
-log.info('Process manager initialized.');
+log.info('Process manager initialized');
 
 /**
  * Export `processManager`.
