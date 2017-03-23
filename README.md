@@ -57,9 +57,9 @@ This lifecycle is used to loop over a given function.
 
 #### Arguments
 
-- `func` _(Function)_: the function to run.
-- `[options]` _(object)_: the options object.
-- `[options.interval=0]` _(integer)_: how long to wait (in miliseconds) before restarting the function.
+-   `func` _(Function)_: the function to run.
+-   `[options]` _(object)_: the options object.
+-   `[options.interval=0]` _(integer)_: how long to wait (in miliseconds) before restarting the function.
 
 #### Example
 
@@ -78,7 +78,7 @@ in an event emmiter. It does not exit unless something goes wrong.
 
 #### Arguments
 
-- `func` _(Function)_: the function to run.
+-   `func` _(Function)_: the function to run.
 
 #### Example
 
@@ -98,7 +98,7 @@ This lifecycle is used to a given function and exit.
 
 #### Arguments
 
-- `func` _(Function)_: the function to run.
+-   `func` _(Function)_: the function to run.
 
 #### Example
 
@@ -121,9 +121,9 @@ disconnecting.
 
 #### Arguments
 
-- `[options]` _(object)_: the options object.
-- `[options.error]` _(Error)_: an error to add to the errors array.
-- `[options.force]` _(Boolean)_: a boolean that forces the shutdown to skip waiting for running processes.
+-   `[options]` _(object)_: the options object.
+-   `[options.error]` _(Error)_: an error to add to the errors array.
+-   `[options.force]` _(Boolean)_: a boolean that forces the shutdown to skip waiting for running processes.
 
 #### Example
 
@@ -135,21 +135,12 @@ processManager.shutdown({ error: new Error('Error') });
 
 ## Hooks
 
-Currently there are two hooks that can be used to call external code. These hooks expect a function
-that returns a value or a thenable.
-
-If a hook takes longer than 30 seconds to return, it will timeout and continue with the process.
-
-```js
-const processManager = require('process-manager');
-
-processManager.addHook('<hook-type>', () => 'result');
-processManager.addHook('<hook-type>', () => Promise.resolve('result'));
-```
+Currently there are three hooks that can be used to call external code during the shutdown process.
+If a hook takes longer than 30 seconds to return, it will timeout and continue with the shutdown process.
 
 ### drain
 
-This hook is called during shutdown, after all running processes have stopped. 
+This hook is called during shutdown, after all running processes have stopped.
 It should be used to drain connections if the process is running a server.
 
 ### disconnect
@@ -163,6 +154,23 @@ connections, etc).
 This hook is called right before the process exits. It passes an array of errors as an argument
 to the handler function, and should be used to handle errors before exiting.
 
+### AddHook
+
+This function is used to add a hook for one of the types described above.
+
+#### Arguments
+
+-   `args.handler` _(function)_: a function that returns a value or a thenable.
+-   `args.type` _(string)_: the hook type.
+-   `[args.name='a handler']` _(string)_: identifies the hook.
+
+```js
+const processManager = require('process-manager');
+
+processManager.addHook({ handler: () => 'result', type: <hook-type> });
+processManager.addHook({ handler: () => Promise.resolve('result'), type: <hook-type> });
+```
+
 ## Debug
 
 Enable verbose debugging by setting the DEBUG environment variable to DEBUG=process-manager.
@@ -172,6 +180,7 @@ Enable verbose debugging by setting the DEBUG environment variable to DEBUG=proc
 ```shell
 ❯ npm version [<new version> | major | minor | patch] -m "Release %s"`
 ```
+
 ## Test
 
 To test using a local version of `node`, run:
@@ -185,6 +194,9 @@ To test using a local version of `node`, run:
 MIT
 
 [npm-image]: https://img.shields.io/npm/v/@uphold/process-manager.svg?style=flat-square
+
 [npm-url]: https://npmjs.org/package/@uphold/process-manager
+
 [travis-image]: https://img.shields.io/travis/uphold/process-manager.svg?style=flat-square
+
 [travis-url]: https://travis-ci.org/uphold/process-manager

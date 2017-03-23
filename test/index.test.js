@@ -39,9 +39,18 @@ describe('ProcessManager', () => {
 
       expect(processManager.hooks).toEqual([]);
 
-      processManager.addHook(type, handler);
+      processManager.addHook({ handler, type });
 
-      expect(processManager.hooks).toEqual([{ handler, type }]);
+      expect(processManager.hooks).toMatchObject([{ handler, name: 'a handler', timeoutError: { message: 'a handler took too long to complete disconnect hook' }, type }]);
+    });
+
+    test('identifies the hook if `name` is provided', () => {
+      const handler = () => '';
+      const type = 'disconnect';
+
+      processManager.addHook({ handler, name: 'foobar', type });
+
+      expect(processManager.hooks).toMatchObject([{ handler, name: 'foobar', timeoutError: { message: 'foobar took too long to complete disconnect hook' }, type }]);
     });
   });
 
@@ -113,8 +122,8 @@ describe('ProcessManager', () => {
       const [h1, h2] = [jest.fn(), jest.fn()];
       const type = 'disconnect';
 
-      processManager.addHook(type, h1);
-      processManager.addHook(type, h2);
+      processManager.addHook({ handler: h1, type });
+      processManager.addHook({ handler: h2, type });
 
       return processManager.hook(type)
       .then(() => {
@@ -127,8 +136,8 @@ describe('ProcessManager', () => {
       const [h1, h2] = [jest.fn(), jest.fn()];
       const type = 'disconnect';
 
-      processManager.addHook(type, h1);
-      processManager.addHook('otherHook', h2);
+      processManager.addHook({ handler: h1, type });
+      processManager.addHook({ handler: h2, type: 'otherHook' });
 
       return processManager.hook(type)
       .then(() => {
@@ -141,7 +150,7 @@ describe('ProcessManager', () => {
       const h1 = jest.fn();
       const type = 'disconnect';
 
-      processManager.addHook(type, h1);
+      processManager.addHook({ handler: h1, type });
 
       return processManager.hook(type, 'foobar')
       .then(() => {
@@ -151,16 +160,18 @@ describe('ProcessManager', () => {
     });
 
     test('resolves with a timeout if hook too long to finish', done => {
-      const h1 = jest.fn();
+      const [h1, h2] = [jest.fn(), jest.fn()];
       const type = 'disconnect';
 
-      processManager.addHook(type, () => new Promise(() => {}).then(h1));
+      processManager.addHook({ handler: h1, type });
+      processManager.addHook({ handler: () => new Promise(() => {}).then(h2), type });
 
       jest.useFakeTimers();
 
       processManager.hook(type)
       .then(() => {
-        expect(h1).not.toBeCalled();
+        expect(h1).toBeCalled();
+        expect(h2).not.toBeCalled();
 
         jest.useRealTimers();
         done();
@@ -192,10 +203,13 @@ describe('ProcessManager', () => {
     test('calls hook `drain`', done => {
       spyOn(processManager, 'hook').and.callThrough();
 
-      processManager.addHook('drain', () => {
-        expect(processManager.hook).toBeCalledWith('drain');
+      processManager.addHook({
+        handler() {
+          expect(processManager.hook).toBeCalledWith('drain');
 
-        done();
+          done();
+        },
+        type: 'drain'
       });
 
       processManager.shutdown();
@@ -204,10 +218,13 @@ describe('ProcessManager', () => {
     test('calls hook `disconnect`', done => {
       spyOn(processManager, 'hook').and.callThrough();
 
-      processManager.addHook('disconnect', () => {
-        expect(processManager.hook).toBeCalledWith('disconnect');
+      processManager.addHook({
+        handler() {
+          expect(processManager.hook).toBeCalledWith('disconnect');
 
-        done();
+          done();
+        },
+        type: 'disconnect'
       });
 
       processManager.shutdown();
@@ -216,10 +233,13 @@ describe('ProcessManager', () => {
     test('calls hook `exit`', done => {
       spyOn(processManager, 'hook').and.callThrough();
 
-      processManager.addHook('exit', () => {
-        expect(processManager.hook).toBeCalledWith('exit', []);
+      processManager.addHook({
+        handler() {
+          expect(processManager.hook).toBeCalledWith('exit', []);
 
-        done();
+          done();
+        },
+        type: 'exit'
       });
 
       processManager.shutdown();
