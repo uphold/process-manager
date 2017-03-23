@@ -122,9 +122,9 @@ class ProcessManager {
   loop(fn, { interval = 0 } = {}) {
     const self = this;
 
-    return this.run(function *() {
+    return co(function *() {
       while (!self.terminating) {
-        yield fn();
+        yield self.run(fn, { exit: false });
 
         if (!self.terminating) {
           yield Promise.delay(interval);

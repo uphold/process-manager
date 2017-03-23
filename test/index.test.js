@@ -320,7 +320,7 @@ describe('ProcessManager', () => {
       test('calls `shutdown` with error if an error is thrown while running the loop', () => {
         const error = new Error();
 
-        spyOn(processManager, 'shutdown');
+        spyOn(processManager, 'shutdown').and.callThrough();
 
         return processManager.loop(function *() { throw error; })
         .then(() => {
