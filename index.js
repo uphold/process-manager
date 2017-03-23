@@ -119,12 +119,12 @@ class ProcessManager {
    * Handle a loop routine.
    */
 
-  loop(func, { interval = 0 } = {}) {
+  loop(fn, { interval = 0 } = {}) {
     const self = this;
 
     return this.run(function *() {
       while (!self.terminating) {
-        yield func();
+        yield fn();
 
         if (!self.terminating) {
           yield Promise.delay(interval);
@@ -137,29 +137,29 @@ class ProcessManager {
    * Handle message routine.
    */
 
-  on(func) {
-    return (...args) => this.run(func, { args, exit: false });
+  on(fn) {
+    return (...args) => this.run(fn, { args, exit: false });
   }
 
   /**
    * Handle once routine.
    */
 
-  once(func) {
-    return this.run(func);
+  once(fn) {
+    return this.run(fn);
   }
 
   /**
    * Routine handler.
    */
 
-  run(func, { args = [], exit = true } = {}) {
+  run(fn, { args = [], exit = true } = {}) {
     if (this.terminating) {
       return;
     }
 
     const id = Symbol();
-    const chain = reflect(co.wrap(func), args)
+    const chain = reflect(co.wrap(fn), args)
       .then(error => {
         _.remove(this.running, { id });
 
