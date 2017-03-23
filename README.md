@@ -1,8 +1,6 @@
 # process-manager
 
-A node.js process manager using [co](https://www.npmjs.com/package/co). This package handles a
-process's lifecycle, from running to exiting, by handling errors and exceptions, as well as
-graceful shutdowns.
+A node.js process manager using [co](https://www.npmjs.com/package/co). This package handles a process's lifecycle, from running to exiting, by handling errors and exceptions, as well as graceful shutdowns.
 
 ## Status
 
@@ -26,7 +24,7 @@ Or **npm**:
 
 To use `process-manager` simply require it in your project.
 
-```js
+```javascript
 const processManager = require('process-manager');
 
 // generator
@@ -51,19 +49,19 @@ processManager.once(async () => {
 
 And it will now manage your node process.
 
-### Loop
+### loop(fn, [options])
 
 This lifecycle is used to loop over a given function.
 
 #### Arguments
 
--   `func` _(Function)_: the function to run.
--   `[options]` _(object)_: the options object.
--   `[options.interval=0]` _(integer)_: how long to wait (in miliseconds) before restarting the function.
+- `fn` _(Function)_: the function to run.
+- `[options]` _(object)_: the options object.
+- `[options.interval=0]` _(integer)_: how long to wait (in miliseconds) before restarting the function.
 
 #### Example
 
-```js
+```javascript
 const processManager = require('process-manager');
 
 processManager.loop(function *() {
@@ -71,18 +69,17 @@ processManager.loop(function *() {
 }, { interval: 600 });
 ```
 
-### On
+### on(fn)
 
-This lifecycle is used to set a function that can be called as much as necessary, it can be called
-in an event emmiter. It does not exit unless something goes wrong.
+This lifecycle is used to get a function suited for using with an event emitter. It does not exit unless something goes wrong.
 
 #### Arguments
 
--   `func` _(Function)_: the function to run.
+- `fn` _(Function)_: the function to run.
 
 #### Example
 
-```js
+```javascript
 const processManager = require('process-manager');
 
 function handler*(value) {
@@ -92,17 +89,17 @@ function handler*(value) {
 client.on('event', processManager.on(handler));
 ```
 
-### Once
+### once(fn)
 
 This lifecycle is used to a given function and exit.
 
 #### Arguments
 
--   `func` _(Function)_: the function to run.
+- `fn` _(Function)_: the function to run.
 
 #### Example
 
-```js
+```javascript
 const processManager = require('process-manager');
 
 processManager.once(function *() {
@@ -110,24 +107,21 @@ processManager.once(function *() {
 });
 ```
 
-### Shutdown
+### shutdown([args])
 
-This function can be called to trigger a process shutdown. If passed an error as an optional
-argument, it will save it to the errors array. This function will only start the shutdown process
-once, any extra calls will be ignored, although it will still save the error if one is passed.
+This function can be called to trigger a process shutdown. If passed an error as an optional argument, it will save it to the errors array. This function will only start the shutdown process once, any extra calls will be ignored, although it will still save the error if one is passed.
 
-If called with `{ force: true }` it will skip waiting for running processes and immediately start
-disconnecting.
+If called with `{ force: true }` it will skip waiting for running processes and immediately start disconnecting.
 
 #### Arguments
 
--   `[options]` _(object)_: the options object.
--   `[options.error]` _(Error)_: an error to add to the errors array.
--   `[options.force]` _(Boolean)_: a boolean that forces the shutdown to skip waiting for running processes.
+- `[args]` _(object)_: the arguments object.
+- `[args.error]` _(Error)_: an error to add to the errors array.
+- `[args.force]` _(Boolean)_: a boolean that forces the shutdown to skip waiting for running processes.
 
 #### Example
 
-```js
+```javascript
 const processManager = require('process-manager');
 
 processManager.shutdown({ error: new Error('Error') });
@@ -135,40 +129,54 @@ processManager.shutdown({ error: new Error('Error') });
 
 ## Hooks
 
-Currently there are three hooks that can be used to call external code during the shutdown process.
-If a hook takes longer than 30 seconds to return, it will timeout and continue with the shutdown process.
+Currently there are three hooks that can be used to call external code during the shutdown process. If a hook takes longer than 30 seconds to return, it will timeout and continue with the shutdown process.
 
 ### drain
 
-This hook is called during shutdown, after all running processes have stopped.
-It should be used to drain connections if the process is running a server.
+This hook is called during shutdown, after all running processes have stopped. It should be used to drain connections if the process is running a server.
 
 ### disconnect
 
-This hook is called after `drain` and it's where
-handlers should be added to close running services (ex.: database connections, persistent
-connections, etc).
+This hook is called after `drain` and it's where handlers should be added to close running services (ex.: database connections, persistent connections, etc).
 
 ### exit
 
-This hook is called right before the process exits. It passes an array of errors as an argument
-to the handler function, and should be used to handle errors before exiting.
+This hook is called right before the process exits. It passes an array of errors as an argument to the handler function, and should be used to handle errors before exiting.
 
-### AddHook
+### addHook({ handler, type, [name='a handler'] })
 
 This function is used to add a hook for one of the types described above.
 
 #### Arguments
 
--   `args.handler` _(function)_: a function that returns a value or a thenable.
--   `args.type` _(string)_: the hook type.
--   `[args.name='a handler']` _(string)_: identifies the hook.
+- `args.handler` _(Function)_: a function that returns a value or a thenable.
+- `args.type` _(string)_: the hook type.
+- `[args.name='a handler']` _(string)_: identifies the hook.
 
-```js
+```javascript
 const processManager = require('process-manager');
 
 processManager.addHook({ handler: () => 'result', type: <hook-type> });
 processManager.addHook({ handler: () => Promise.resolve('result'), type: <hook-type> });
+```
+
+## Integrations
+
+### [sentry.io](https://sentry.io)
+
+The recommended way to report errors to sentry is by adding an `exit` hook and sending each error using a promisified `captureException`.
+
+```javascript
+const Promise = require('bluebird');
+const raven = Promise.promisifyAll(require('raven'));
+
+raven.config('https://******@sentry.io/<appId>').install();
+
+processManager.addHook({
+  handler: errors => Promise.map(errors, error => raven.captureExceptionAsync(error)),
+  name: 'sentry',
+  type: 'exit'
+});
 ```
 
 ## Debug
@@ -194,9 +202,6 @@ To test using a local version of `node`, run:
 MIT
 
 [npm-image]: https://img.shields.io/npm/v/@uphold/process-manager.svg?style=flat-square
-
 [npm-url]: https://npmjs.org/package/@uphold/process-manager
-
 [travis-image]: https://img.shields.io/travis/uphold/process-manager.svg?style=flat-square
-
 [travis-url]: https://travis-ci.org/uphold/process-manager
