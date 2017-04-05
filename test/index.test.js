@@ -482,7 +482,7 @@ describe('ProcessManager', () => {
       const error = new Error();
 
       process.once('uncaughtException', () => {
-        expect(processManager.shutdown).toBeCalledWith({ error, force: true });
+        expect(processManager.shutdown).toBeCalledWith({ error });
 
         done();
       });

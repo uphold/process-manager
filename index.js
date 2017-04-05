@@ -242,7 +242,7 @@ process.on('unhandledRejection', error => {
 process.on('uncaughtException', error => {
   log.info('Caught exception', error);
 
-  processManager.shutdown({ error, force: true });
+  processManager.shutdown({ error });
 });
 
 /**
