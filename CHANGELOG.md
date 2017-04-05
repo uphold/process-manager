@@ -1,5 +1,8 @@
 # Changelog
 
+## [v1.0.1](https://github.com/uphold/process-manager/releases/tag/v1.0.1) (2017-04-05)
+- Fix uncaughtException forcing shutdown [\#24](https://github.com/uphold/process-manager/pull/24) ([kurayama](https://github.com/kurayama))
+
 ## [v1.0.0](https://github.com/uphold/process-manager/releases/tag/v1.0.0) (2017-03-23)
 - Fix changelog future release tag [\#23](https://github.com/uphold/process-manager/pull/23) ([kurayama](https://github.com/kurayama))
 - Remove dots in log messages [\#21](https://github.com/uphold/process-manager/pull/21) ([kurayama](https://github.com/kurayama))
