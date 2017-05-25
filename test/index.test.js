@@ -1,4 +1,4 @@
-/* eslint require-yield: 0, no-console: 0 */
+/* eslint no-console: 0 */
 
 /**
  * Module Dependencies.
@@ -292,184 +292,142 @@ describe('ProcessManager', () => {
         processManager.forceShutdown.promise.catch(done);
       });
 
-      processManager.loop(function *() {}, { interval: 1000 });
+      processManager.loop(async () => {}, { interval: 1000 });
 
       processManager.shutdown();
       processManager.shutdown({ force: true });
     });
   });
 
-  describe('with generator functions', () => {
-    describe('loop()', () => {
-      test('loops until `terminating` is true', () => {
-        const fn = jest.fn();
-
-        let i = 0;
-
-        return processManager.loop(function *() {
-          fn();
-
-          if (++i === 3) {
-            processManager.shutdown();
-          }
-        }).then(() => {
-          expect(fn).toHaveBeenCalledTimes(3);
-        });
-      });
-
-      test('calls `shutdown` with error if an error is thrown while running the loop', () => {
-        const error = new Error();
-
-        spyOn(processManager, 'shutdown').and.callThrough();
-
-        return processManager.loop(function *() { throw error; })
-        .then(() => {
-          expect(processManager.shutdown).toBeCalledWith({ error });
-        });
-      });
-    });
-
-    describe('on()', () => {
-      test('calls the given generator', () => {
-        const fn = jest.fn();
-
-        const on = processManager.on(function *() { fn(); });
-
-        return on()
-        .then(() => {
-          expect(fn).toBeCalled();
-        });
-      });
-
-      test('passes arguments to the given generator', () => {
-        const fn = jest.fn();
-
-        const on = processManager.on(function *(value) { fn(value); });
-
-        return on('foo')
-        .then(() => {
-          expect(fn).toBeCalled();
-          expect(fn).toBeCalledWith('foo');
-        });
-      });
-
-      test('can be called repeatedly', () => {
-        const fn = jest.fn();
-
-        spyOn(processManager, 'shutdown');
-
-        const on = processManager.on(function *() { fn(); });
-
-        let i = 0;
-        const onArray = [];
-
-        for (i; i < 10; i++) {
-          onArray.push(on());
-        }
-
-        return Promise.all(onArray)
-        .then(() => {
-          expect(fn).toHaveBeenCalledTimes(i);
-          expect(processManager.shutdown).not.toBeCalled();
-
-          processManager.shutdown();
-        });
-      });
-    });
-
-    describe('once()', () => {
-      test('calls the given generator', () => {
-        const fn = jest.fn();
-
-        return processManager.once(function *() { fn(); })
-        .then(() => {
-          expect(fn).toBeCalled();
-        });
-      });
-    });
-
-    describe('run()', () => {
-      test('does nothing if `processManager` is terminating', () => {
-        const fn = jest.fn();
-
-        processManager.terminating = true;
-
-        const result = processManager.run(function *() { fn(); });
-
-        expect(fn).not.toBeCalled();
-        expect(result).toBeUndefined();
-      });
-
-      test('returns the coroutine', done => {
-        spyOn(processManager, 'shutdown').and.callFake(() => {
-          done();
-        });
-
-        const chain = processManager.run(function *() {});
-
-        expect(chain.then).toBeDefined();
-        expect(typeof chain.id).toBe('symbol');
-      });
-
-      test('calls `shutdown` with error if an error is thrown while running the generator', () => {
-        const error = new Error();
-
-        spyOn(processManager, 'shutdown');
-
-        return processManager.run(function *() { throw error; })
-        .then(() => {
-          expect(processManager.shutdown).toBeCalledWith({ error });
-        });
-      });
-
-      test('calls `shutdown` after running the generator', () => {
-        spyOn(processManager, 'shutdown');
-
-        return processManager.run(function *() {})
-        .then(() => {
-          expect(processManager.shutdown).toBeCalledWith({ error: undefined });
-        });
-      });
-    });
-  });
-
-  describe('with promises', () => {
-    test('loop works with Promise', () => {
+  describe('loop()', () => {
+    test('loops until `terminating` is true', () => {
       const fn = jest.fn();
 
       let i = 0;
 
-      return processManager.loop(() => new Promise(resolve => {
+      return processManager.loop(async () => {
         fn();
 
         if (++i === 3) {
           processManager.shutdown();
         }
-
-        resolve();
-      })).then(() => {
+      }).then(() => {
         expect(fn).toHaveBeenCalledTimes(3);
       });
     });
 
-    test('on works with Promise', () => {
+    test('calls `shutdown` with error if an error is thrown while running the loop', () => {
+      const error = new Error();
+
+      spyOn(processManager, 'shutdown').and.callThrough();
+
+      return processManager.loop(async () => { throw error; })
+      .then(() => {
+        expect(processManager.shutdown).toBeCalledWith({ error });
+      });
+    });
+  });
+
+  describe('on()', () => {
+    test('calls the given function', () => {
       const fn = jest.fn();
 
-      const on = processManager.on(() => new Promise(resolve => { fn(); resolve(); }));
+      const on = processManager.on(async () => fn());
 
       return on()
-        .then(() => {
-          expect(fn).toBeCalled();
-        });
+      .then(() => {
+        expect(fn).toBeCalled();
+      });
     });
 
-    test('once works with Promise', () => {
+    test('passes arguments to the given function', () => {
       const fn = jest.fn();
 
-      return processManager.once(() => new Promise(resolve => { fn(); resolve(); }))
-        .then(() => {
-          expect(fn).toBeCalled();
-        });
+      const on = processManager.on(async value => fn(value));
+
+      return on('foo')
+      .then(() => {
+        expect(fn).toBeCalled();
+        expect(fn).toBeCalledWith('foo');
+      });
+    });
+
+    test('can be called repeatedly', () => {
+      const fn = jest.fn();
+
+      spyOn(processManager, 'shutdown');
+
+      const on = processManager.on(async () => fn());
+
+      let i = 0;
+      const onArray = [];
+
+      for (i; i < 10; i++) {
+        onArray.push(on());
+      }
+
+      return Promise.all(onArray)
+      .then(() => {
+        expect(fn).toHaveBeenCalledTimes(i);
+        expect(processManager.shutdown).not.toBeCalled();
+
+        processManager.shutdown();
+      });
+    });
+  });
+
+  describe('once()', () => {
+    test('calls the given function', () => {
+      const fn = jest.fn();
+
+      return processManager.once(async () => fn())
+      .then(() => {
+        expect(fn).toBeCalled();
+      });
+    });
+  });
+
+  describe('run()', () => {
+    test('does nothing if `processManager` is terminating', () => {
+      const fn = jest.fn();
+
+      processManager.terminating = true;
+
+      const result = processManager.run(async () => fn());
+
+      expect(fn).not.toBeCalled();
+      expect(result).toBeUndefined();
+    });
+
+    test('returns the coroutine', done => {
+      spyOn(processManager, 'shutdown').and.callFake(() => {
+        done();
+      });
+
+      const chain = processManager.run(async () => {});
+
+      expect(chain.then).toBeDefined();
+      expect(typeof chain.id).toBe('symbol');
+    });
+
+    test('calls `shutdown` with error if an error is thrown while running the function', () => {
+      const error = new Error();
+
+      spyOn(processManager, 'shutdown');
+
+      return processManager.run(async () => { throw error; })
+      .then(() => {
+        expect(processManager.shutdown).toBeCalledWith({ error });
+      });
+    });
+
+    test('calls `shutdown` after running the function', () => {
+      spyOn(processManager, 'shutdown');
+
+      return processManager.run(async () => {})
+      .then(() => {
+        expect(processManager.shutdown).toBeCalledWith({ error: undefined });
+      });
     });
   });
 
