@@ -6,7 +6,6 @@
 
 const _ = require('lodash');
 const Promise = require('bluebird');
-const co = require('co');
 const log = require('debugnyan')('process-manager');
 
 /**
@@ -120,17 +119,15 @@ class ProcessManager {
    */
 
   loop(fn, { interval = 0 } = {}) {
-    const self = this;
+    return (async () => {
+      while (!this.terminating) {
+        await this.run(fn, { exit: false });
 
-    return co(function *() {
-      while (!self.terminating) {
-        yield self.run(fn, { exit: false });
-
-        if (!self.terminating) {
-          yield Promise.delay(interval);
+        if (!this.terminating) {
+          await Promise.delay(interval);
         }
       }
-    });
+    })();
   }
 
   /**
@@ -159,7 +156,7 @@ class ProcessManager {
     }
 
     const id = Symbol();
-    const chain = reflect(co.wrap(fn), args)
+    const chain = reflect(fn, args)
       .then(error => {
         _.remove(this.running, { id });
 

@@ -1,6 +1,6 @@
 # process-manager
 
-A node.js process manager using [co](https://www.npmjs.com/package/co). This package handles a process's lifecycle, from running to exiting, by handling errors and exceptions, as well as graceful shutdowns.
+A node.js process manager. This package handles a process's lifecycle, from running to exiting, by handling errors and exceptions, as well as graceful shutdowns.
 
 ## Status
 
@@ -27,9 +27,9 @@ To use `process-manager` simply require it in your project.
 ```javascript
 const processManager = require('process-manager');
 
-// generator
-processManager.once(function *(){
-  yield foo.bar();
+// async/await
+processManager.once(async () => {
+  await foo.bar();
 });
 
 // Promise
@@ -41,10 +41,6 @@ processManager.once(() => new Promise((resolve, reject) => {
   });
 }));
 
-// async/await (node v7)
-processManager.once(async () => {
-  await foo.bar();
-});
 ```
 
 And it will now manage your node process.
@@ -64,8 +60,8 @@ This lifecycle is used to loop over a given function.
 ```javascript
 const processManager = require('process-manager');
 
-processManager.loop(function *() {
-  console.log(yield client.getSomeInfo());
+processManager.loop(async () => {
+  console.log(await client.getSomeInfo());
 }, { interval: 600 });
 ```
 
@@ -82,8 +78,8 @@ This lifecycle is used to get a function suited for using with an event emitter.
 ```javascript
 const processManager = require('process-manager');
 
-function handler*(value) {
-  console.log(yield client.getInfo(value));
+async function handler(value) {
+  console.log(await client.getInfo(value));
 }
 
 client.on('event', processManager.on(handler));
@@ -102,8 +98,8 @@ This lifecycle is used to a given function and exit.
 ```javascript
 const processManager = require('process-manager');
 
-processManager.once(function *() {
-  yield client.doWork();
+processManager.once(async () => {
+  await client.doWork();
 });
 ```
 
