@@ -1,5 +1,8 @@
 # Changelog
 
+## [v2.0.0](https://github.com/uphold/process-manager/releases/tag/v2.0.0) (2018-03-09)
+- Remove co dependency [\#26](https://github.com/uphold/process-manager/pull/26) ([kurayama](https://github.com/kurayama))
+
 ## [v1.0.1](https://github.com/uphold/process-manager/releases/tag/v1.0.1) (2017-04-05)
 - Fix uncaughtException forcing shutdown [\#24](https://github.com/uphold/process-manager/pull/24) ([kurayama](https://github.com/kurayama))
 
