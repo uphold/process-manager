@@ -1,6 +1,7 @@
 # Changelog
 
-## [v2.0.0](https://github.com/uphold/process-manager/releases/tag/v2.0.0) (2018-03-09)
+## [v2.0.1](https://github.com/uphold/process-manager/releases/tag/v2.0.1) (2018-08-14)
+- Update lodash to fix vulnerability [\#27](https://github.com/uphold/process-manager/pull/27) ([Americas](https://github.com/Americas))
 - Remove co dependency [\#26](https://github.com/uphold/process-manager/pull/26) ([kurayama](https://github.com/kurayama))
 
 ## [v1.0.1](https://github.com/uphold/process-manager/releases/tag/v1.0.1) (2017-04-05)
