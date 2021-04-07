@@ -4,7 +4,7 @@
  * Module Dependencies.
  */
 
-const ProcessManager = require('..').constructor;
+const ProcessManager = require('..');
 const Promise = require('bluebird');
 
 /**
@@ -15,10 +15,12 @@ describe('ProcessManager', () => {
   let processManager;
 
   beforeEach(() => {
-    spyOn(process, 'exit');
-    spyOn(console, 'error');
+    jest.spyOn(process, 'exit').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    processManager = new ProcessManager();
+    processManager = new ProcessManager({
+      log: { error: () => {}, info: () => {} }
+    });
   });
 
   describe('constructor()', () => {
@@ -41,7 +43,7 @@ describe('ProcessManager', () => {
 
       processManager.addHook({ handler, type });
 
-      expect(processManager.hooks).toMatchObject([{ handler, name: 'a handler', timeoutError: { message: 'a handler took too long to complete disconnect hook' }, type }]);
+      expect(processManager.hooks).toMatchObject([{ handler, name: 'a handler', timeoutError: new Promise.TimeoutError('a handler took too long to complete disconnect hook'), type }]);
     });
 
     test('identifies the hook if `name` is provided', () => {
@@ -50,7 +52,7 @@ describe('ProcessManager', () => {
 
       processManager.addHook({ handler, name: 'foobar', type });
 
-      expect(processManager.hooks).toMatchObject([{ handler, name: 'foobar', timeoutError: { message: 'foobar took too long to complete disconnect hook' }, type }]);
+      expect(processManager.hooks).toMatchObject([{ handler, name: 'foobar', timeoutError: new Promise.TimeoutError('foobar took too long to complete disconnect hook'), type }]);
     });
   });
 
@@ -84,7 +86,7 @@ describe('ProcessManager', () => {
     test('calls `process.exit`', () => {
       processManager.exit();
 
-      expect(process.exit).toBeCalled();
+      expect(process.exit).toHaveBeenCalled();
     });
 
     test('sets `process.exitCode` to 1 if there are errors', () => {
@@ -92,8 +94,8 @@ describe('ProcessManager', () => {
 
       processManager.exit();
 
-      expect(process.exit).toBeCalled();
-      expect(process.exit).toBeCalledWith(1);
+      expect(process.exit).toHaveBeenCalled();
+      expect(process.exit).toHaveBeenCalledWith(1);
     });
 
     test('calls `console.error` if `DEBUG` is not set', () => {
@@ -101,8 +103,8 @@ describe('ProcessManager', () => {
 
       processManager.exit();
 
-      expect(console.error).toBeCalled();
-      expect(console.error).toBeCalledWith(...processManager.errors);
+      expect(console.error).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(...processManager.errors);
     });
 
     test('does not call `console.error` if `DEBUG` is set', () => {
@@ -111,7 +113,7 @@ describe('ProcessManager', () => {
 
       processManager.exit();
 
-      expect(console.error).not.toBeCalled();
+      expect(console.error).not.toHaveBeenCalled();
 
       delete process.env.DEBUG;
     });
@@ -127,8 +129,8 @@ describe('ProcessManager', () => {
 
       return processManager.hook(type)
       .then(() => {
-        expect(h1).toBeCalled();
-        expect(h2).toBeCalled();
+        expect(h1).toHaveBeenCalled();
+        expect(h2).toHaveBeenCalled();
       });
     });
 
@@ -141,8 +143,8 @@ describe('ProcessManager', () => {
 
       return processManager.hook(type)
       .then(() => {
-        expect(h1).toBeCalled();
-        expect(h2).not.toBeCalled();
+        expect(h1).toHaveBeenCalled();
+        expect(h2).not.toHaveBeenCalled();
       });
     });
 
@@ -154,12 +156,12 @@ describe('ProcessManager', () => {
 
       return processManager.hook(type, 'foobar')
       .then(() => {
-        expect(h1).toBeCalled();
-        expect(h1).toBeCalledWith('foobar');
+        expect(h1).toHaveBeenCalled();
+        expect(h1).toHaveBeenCalledWith('foobar');
       });
     });
 
-    test('resolves with a timeout if hook too long to finish', done => {
+    test('resolves with a timeout if hook takes too long to finish', done => {
       const [h1, h2] = [jest.fn(), jest.fn()];
       const type = 'disconnect';
 
@@ -170,14 +172,89 @@ describe('ProcessManager', () => {
 
       processManager.hook(type)
       .then(() => {
-        expect(h1).toBeCalled();
-        expect(h2).not.toBeCalled();
+        expect(h1).toHaveBeenCalled();
+        expect(h2).not.toHaveBeenCalled();
 
         jest.useRealTimers();
         done();
       });
 
-      jest.runAllTimers();
+      jest.runOnlyPendingTimers();
+    });
+  });
+
+  describe('installHandlers()', () => {
+    test('sets up `uncaughtException` shutdown handler', () => {
+      const error = new Error();
+
+      jest.spyOn(processManager, 'shutdown').mockImplementation(() => {});
+      jest.spyOn(process, 'on').mockImplementation((signal, callback) => {
+        if (signal === 'uncaughtException') {
+          callback(error);
+        }
+      });
+
+      processManager.installHandlers();
+
+      expect(process.on).toHaveBeenCalledWith('uncaughtException', expect.any(Function));
+
+      expect(processManager.shutdown).toHaveBeenCalledTimes(1);
+      expect(processManager.shutdown).toHaveBeenCalledWith({ error });
+    });
+
+    test('sets up `unhandledRejection` shutdown handler', () => {
+      const error = new Error();
+
+      jest.spyOn(processManager, 'shutdown').mockImplementation(() => {});
+      jest.spyOn(process, 'on').mockImplementation((signal, callback) => {
+        if (signal === 'unhandledRejection') {
+          callback(error);
+        }
+      });
+
+      processManager.installHandlers();
+
+      expect(process.on).toHaveBeenCalledWith('unhandledRejection', expect.any(Function));
+
+      expect(processManager.shutdown).toHaveBeenCalledTimes(1);
+      expect(processManager.shutdown).toHaveBeenCalledWith({ error });
+    });
+
+    test('sets up `SIGINT` shutdown handler', () => {
+      jest.spyOn(processManager, 'shutdown').mockImplementation(() => {});
+      jest.spyOn(process, 'on').mockImplementation((signal, callback) => {
+        if (signal === 'SIGINT') {
+          callback();
+
+          processManager.terminating = true;
+
+          callback();
+        }
+      });
+
+      processManager.installHandlers();
+
+      expect(process.on).toHaveBeenCalledWith('SIGINT', expect.any(Function));
+
+      expect(processManager.shutdown).toHaveBeenCalledTimes(2);
+      expect(processManager.shutdown).toHaveBeenNthCalledWith(1, { force: false });
+      expect(processManager.shutdown).toHaveBeenNthCalledWith(2, { force: true });
+    });
+
+    test('sets up `SIGTERM` shutdown handler', () => {
+      jest.spyOn(processManager, 'shutdown').mockImplementation(() => {});
+      jest.spyOn(process, 'on').mockImplementation((signal, callback) => {
+        if (signal === 'SIGTERM') {
+          callback();
+        }
+      });
+
+      processManager.installHandlers();
+
+      expect(process.on).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+
+      expect(processManager.shutdown).toHaveBeenCalledTimes(1);
+      expect(processManager.shutdown).toHaveBeenCalledWith();
     });
   });
 
@@ -201,11 +278,11 @@ describe('ProcessManager', () => {
     });
 
     test('calls hook `drain`', done => {
-      spyOn(processManager, 'hook').and.callThrough();
+      jest.spyOn(processManager, 'hook');
 
       processManager.addHook({
         handler() {
-          expect(processManager.hook).toBeCalledWith('drain');
+          expect(processManager.hook).toHaveBeenCalledWith('drain');
 
           done();
         },
@@ -216,11 +293,11 @@ describe('ProcessManager', () => {
     });
 
     test('calls hook `disconnect`', done => {
-      spyOn(processManager, 'hook').and.callThrough();
+      jest.spyOn(processManager, 'hook');
 
       processManager.addHook({
         handler() {
-          expect(processManager.hook).toBeCalledWith('disconnect');
+          expect(processManager.hook).toHaveBeenCalledWith('disconnect');
 
           done();
         },
@@ -231,11 +308,11 @@ describe('ProcessManager', () => {
     });
 
     test('calls hook `exit`', done => {
-      spyOn(processManager, 'hook').and.callThrough();
+      jest.spyOn(processManager, 'hook');
 
       processManager.addHook({
         handler() {
-          expect(processManager.hook).toBeCalledWith('exit', []);
+          expect(processManager.hook).toHaveBeenCalledWith('exit', []);
 
           done();
         },
@@ -246,7 +323,7 @@ describe('ProcessManager', () => {
     });
 
     test('calls `processManager.exit`', done => {
-      spyOn(processManager, 'exit').and.callFake(() => {
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {
         done();
       });
 
@@ -256,11 +333,11 @@ describe('ProcessManager', () => {
     test('adds error to `processManager.errors`', done => {
       const error = new Error();
 
-      spyOn(processManager, 'exit').and.callFake(() => {
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {
         expect(processManager.errors).toHaveLength(1);
         expect(processManager.errors).toContain(error);
 
-        expect(processManager.exit).toBeCalled();
+        expect(processManager.exit).toHaveBeenCalled();
         expect(processManager.exit).toHaveBeenCalledTimes(1);
 
         done();
@@ -272,12 +349,12 @@ describe('ProcessManager', () => {
     test('adds errors to `processManager.errors` if called more than once', done => {
       const [e1, e2] = [new Error(), new Error()];
 
-      spyOn(processManager, 'exit').and.callFake(() => {
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {
         expect(processManager.errors).toHaveLength(2);
         expect(processManager.errors).toContain(e1);
         expect(processManager.errors).toContain(e2);
 
-        expect(processManager.exit).toBeCalled();
+        expect(processManager.exit).toHaveBeenCalled();
         expect(processManager.exit).toHaveBeenCalledTimes(1);
 
         done();
@@ -288,7 +365,7 @@ describe('ProcessManager', () => {
     });
 
     test('forces shutdown if `processManager.shutdown` is called with force `true`', done => {
-      spyOn(processManager, 'exit').and.callFake(() => {
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {
         processManager.forceShutdown.promise.catch(done);
       });
 
@@ -319,11 +396,11 @@ describe('ProcessManager', () => {
     test('calls `shutdown` with error if an error is thrown while running the loop', () => {
       const error = new Error();
 
-      spyOn(processManager, 'shutdown').and.callThrough();
+      jest.spyOn(processManager, 'shutdown');
 
       return processManager.loop(async () => { throw error; })
       .then(() => {
-        expect(processManager.shutdown).toBeCalledWith({ error });
+        expect(processManager.shutdown).toHaveBeenCalledWith({ error });
       });
     });
   });
@@ -336,7 +413,7 @@ describe('ProcessManager', () => {
 
       return on()
       .then(() => {
-        expect(fn).toBeCalled();
+        expect(fn).toHaveBeenCalled();
       });
     });
 
@@ -347,15 +424,15 @@ describe('ProcessManager', () => {
 
       return on('foo')
       .then(() => {
-        expect(fn).toBeCalled();
-        expect(fn).toBeCalledWith('foo');
+        expect(fn).toHaveBeenCalled();
+        expect(fn).toHaveBeenCalledWith('foo');
       });
     });
 
     test('can be called repeatedly', () => {
       const fn = jest.fn();
 
-      spyOn(processManager, 'shutdown');
+      jest.spyOn(processManager, 'shutdown');
 
       const on = processManager.on(async () => fn());
 
@@ -369,7 +446,7 @@ describe('ProcessManager', () => {
       return Promise.all(onArray)
       .then(() => {
         expect(fn).toHaveBeenCalledTimes(i);
-        expect(processManager.shutdown).not.toBeCalled();
+        expect(processManager.shutdown).not.toHaveBeenCalled();
 
         processManager.shutdown();
       });
@@ -382,7 +459,7 @@ describe('ProcessManager', () => {
 
       return processManager.once(async () => fn())
       .then(() => {
-        expect(fn).toBeCalled();
+        expect(fn).toHaveBeenCalled();
       });
     });
   });
@@ -395,12 +472,12 @@ describe('ProcessManager', () => {
 
       const result = processManager.run(async () => fn());
 
-      expect(fn).not.toBeCalled();
+      expect(fn).not.toHaveBeenCalled();
       expect(result).toBeUndefined();
     });
 
     test('returns the coroutine', done => {
-      spyOn(processManager, 'shutdown').and.callFake(() => {
+      jest.spyOn(processManager, 'shutdown').mockImplementation(() => {
         done();
       });
 
@@ -413,105 +490,21 @@ describe('ProcessManager', () => {
     test('calls `shutdown` with error if an error is thrown while running the function', () => {
       const error = new Error();
 
-      spyOn(processManager, 'shutdown');
+      jest.spyOn(processManager, 'shutdown');
 
       return processManager.run(async () => { throw error; })
       .then(() => {
-        expect(processManager.shutdown).toBeCalledWith({ error });
+        expect(processManager.shutdown).toHaveBeenCalledWith({ error });
       });
     });
 
     test('calls `shutdown` after running the function', () => {
-      spyOn(processManager, 'shutdown');
+      jest.spyOn(processManager, 'shutdown');
 
       return processManager.run(async () => {})
       .then(() => {
-        expect(processManager.shutdown).toBeCalledWith({ error: undefined });
+        expect(processManager.shutdown).toHaveBeenCalledWith({ error: undefined });
       });
-    });
-  });
-
-  describe('event handling', () => {
-    test('catches `uncaughtException`', done => {
-      const processManager = require('..');
-
-      spyOn(processManager, 'shutdown');
-
-      const error = new Error();
-
-      process.once('uncaughtException', () => {
-        expect(processManager.shutdown).toBeCalledWith({ error });
-
-        done();
-      });
-
-      setImmediate(() => { throw error; });
-    });
-
-    test('catches `unhandledRejection`', done => {
-      const processManager = require('..');
-
-      spyOn(processManager, 'shutdown');
-
-      const error = new Error();
-
-      process.once('unhandledRejection', () => {
-        expect(processManager.shutdown).toBeCalledWith({ error });
-
-        done();
-      });
-
-      Promise.reject(error);
-    });
-
-    describe('catches `SIGINT`', () => {
-      test('and shuts down normally', done => {
-        const processManager = require('..');
-
-        spyOn(processManager, 'shutdown');
-
-        process.once('SIGINT', () => {
-          expect(processManager.shutdown).toHaveBeenCalled();
-          expect(processManager.shutdown).toHaveBeenLastCalledWith({ force: false });
-
-          done();
-        });
-
-        process.kill(process.pid, 'SIGINT');
-      });
-
-      test('and forces shutdown if process manager is already terminating', done => {
-        const processManager = require('..');
-
-        processManager.terminating = true;
-
-        spyOn(processManager, 'shutdown');
-
-        process.once('SIGINT', () => {
-          processManager.terminating = false;
-
-          expect(processManager.shutdown).toHaveBeenCalled();
-          expect(processManager.shutdown).toHaveBeenLastCalledWith({ force: true });
-
-          done();
-        });
-
-        process.kill(process.pid, 'SIGINT');
-      });
-    });
-
-    test('catches `SIGTERM`', done => {
-      const processManager = require('..');
-
-      spyOn(processManager, 'shutdown');
-
-      process.once('SIGTERM', () => {
-        expect(processManager.shutdown).toBeCalled();
-
-        done();
-      });
-
-      process.kill(process.pid, 'SIGTERM');
     });
   });
 });
