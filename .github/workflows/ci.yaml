@@ -1,0 +1,22 @@
+name: CI
+
+on: [push]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        nodeVersion: [10, 12, 14, 16]
+
+    name: Tests
+    runs-on: ubuntu-latest
+
+    container:
+      image: node:${{ matrix.nodeVersion }}-alpine
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn test
