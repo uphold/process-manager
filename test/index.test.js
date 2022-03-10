@@ -4,7 +4,7 @@
  * Module Dependencies.
  */
 
-const ProcessManager = require('..').constructor;
+const ProcessManager = require('../src').constructor;
 const Promise = require('bluebird');
 
 /**
@@ -159,7 +159,7 @@ describe('ProcessManager', () => {
       });
     });
 
-    test('resolves with a timeout if hook too long to finish', done => {
+    test('resolves with a timeout if hook takes too long to finish', done => {
       const [h1, h2] = [jest.fn(), jest.fn()];
       const type = 'disconnect';
 

@@ -14,10 +14,11 @@
   },
   "license": "MIT",
   "author": "Uphold",
+  "main": "src/index.js",
   "repository": "https://github.com/uphold/process-manager.git",
   "scripts": {
     "changelog": "github-changelog-generator --owner=uphold --repo=process-manager --future-release=v$npm_package_version > CHANGELOG.md",
-    "lint": "eslint index.js test",
+    "lint": "eslint src test",
     "test": "jest --coverage --runInBand --verbose",
     "version": "npm run changelog && git add -A CHANGELOG.md"
   },

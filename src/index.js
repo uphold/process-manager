@@ -7,30 +7,7 @@
 const _ = require('lodash');
 const Promise = require('bluebird');
 const log = require('debugnyan')('process-manager');
-
-/**
- * Auxiliary promise defer method.
- */
-
-function deferred() {
-  const deferred = {};
-
-  deferred.promise = new Promise((resolve, reject) => {
-    deferred.resolve = resolve;
-    deferred.reject = reject;
-  });
-
-  return deferred;
-}
-
-/**
- * Auxiliary reflect method.
- */
-
-function reflect(thenable, args) {
-  return Promise.try(() => thenable(...args))
-    .then(_.noop, _.identity);
-}
+const utils = require('./utils');
 
 /**
  * `ProcessManager`.
@@ -44,7 +21,7 @@ class ProcessManager {
 
   constructor() {
     this.errors = [];
-    this.forceShutdown = deferred();
+    this.forceShutdown = utils.deferred();
     this.hooks = [];
     this.running = [];
     this.terminating = false;
@@ -96,7 +73,7 @@ class ProcessManager {
 
   hook(type, ...args) {
     const hooks = _.filter(this.hooks, { type });
-    const promises = _.map(hooks, ({ handler }) => reflect(handler, args));
+    const promises = _.map(hooks, ({ handler }) => utils.reflect(handler, args));
 
     return Promise.all(promises)
       .timeout(this.timeout, type)
@@ -124,7 +101,7 @@ class ProcessManager {
         await this.run(fn, { exit: false });
 
         if (!this.terminating) {
-          await Promise.delay(interval);
+          await utils.timeout(interval);
         }
       }
     })();
@@ -156,7 +133,7 @@ class ProcessManager {
     }
 
     const id = Symbol();
-    const chain = reflect(fn, args)
+    const chain = utils.reflect(fn, args)
       .then(error => {
         _.remove(this.running, { id });
 
