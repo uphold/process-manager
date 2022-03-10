@@ -19,8 +19,8 @@ module.exports.deferred = function() {
  * Creates promise that will resolve after the given time (in ms).
  */
 
-module.exports.timeout = function(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+module.exports.timeout = function(ms, returnValue) {
+  return new Promise(resolve => setTimeout(() => resolve(returnValue), ms));
 };
 
 /**

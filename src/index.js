@@ -4,10 +4,14 @@
  * Module dependencies.
  */
 
-const _ = require('lodash');
-const Promise = require('bluebird');
 const log = require('debugnyan')('process-manager');
 const utils = require('./utils');
+
+/**
+ * Timeout error.
+ */
+
+class TimeoutError extends Error {}
 
 /**
  * `ProcessManager`.
@@ -33,7 +37,7 @@ class ProcessManager {
    */
 
   addHook({ type, handler, name = 'a handler' }) {
-    this.hooks.push({ handler, name, timeoutError: new Promise.TimeoutError(`${name} took too long to complete ${type} hook`), type });
+    this.hooks.push({ handler, name, timeoutError: new TimeoutError(`${name} took too long to complete ${type} hook`), type });
 
     log.info(`New handler added for hook ${type}`);
   }
@@ -72,23 +76,23 @@ class ProcessManager {
    */
 
   hook(type, ...args) {
-    const hooks = _.filter(this.hooks, { type });
-    const promises = _.map(hooks, ({ handler }) => utils.reflect(handler, args));
+    const hooks = this.hooks.filter(hook => hook.type === type);
+    const promises = hooks.map(({ handler, timeoutError }) => {
+      return Promise.race([
+        utils.reflect(handler, args),
+        utils.timeout(this.timeout, timeoutError)
+      ]);
+    });
 
-    return Promise.all(promises)
-      .timeout(this.timeout, type)
-      .catch(Promise.TimeoutError, () => {
-        for (let i = 0; i < hooks.length; ++i) {
-          if (!promises[i].isPending()) {
-            continue;
-          }
-
-          this.errors.push(hooks[i].timeoutError);
-
-          log.info(`Timeout: ${hooks[i].name} took too long to complete ${type} hook`);
+    return Promise.all(promises).then(results => {
+      for (const result of results) {
+        if (result instanceof TimeoutError) {
+          log.info(`Timeout: ${result.message}`);
+        } else if (result) {
+          this.errors.push(result);
         }
-      })
-      .then(errors => this.errors.push(..._.compact(errors)));
+      }
+    });
   }
 
   /**
@@ -135,7 +139,7 @@ class ProcessManager {
     const id = Symbol();
     const chain = utils.reflect(fn, args)
       .then(error => {
-        _.remove(this.running, { id });
+        this.running.splice(this.running.findIndex(chain => chain.id === id), 1);
 
         if (error || exit) {
           this.shutdown({ error });
@@ -173,9 +177,9 @@ class ProcessManager {
     const gracefulShutdown = Promise.all(this.running)
       .then(() => log.info('All running instances have stopped'))
       .then(() => this.hook('drain'))
-      .then(() => log.info(`${_.filter(this.hooks, { type: 'drain' }).length} server(s) drained`))
+      .then(() => log.info(`${this.hooks.filter(hook => hook.type === 'drain').length} server(s) drained`))
       .then(() => this.hook('disconnect'))
-      .then(() => log.info(`${_.filter(this.hooks, { type: 'disconnect' }).length} service(s) disconnected`))
+      .then(() => log.info(`${this.hooks.filter(hook => hook.type === 'disconnect').length} service(s) disconnected`))
       .then(() => this.hook('exit', this.errors));
 
     Promise.race([gracefulShutdown, this.forceShutdown.promise])

@@ -5,7 +5,6 @@
  */
 
 const ProcessManager = require('../src').constructor;
-const Promise = require('bluebird');
 
 /**
  * Test `ProcessManager`.
@@ -156,6 +155,20 @@ describe('ProcessManager', () => {
       .then(() => {
         expect(h1).toBeCalled();
         expect(h1).toBeCalledWith('foobar');
+      });
+    });
+
+    test('adds all errors thrown from the handlers to the errors array', () => {
+      const [e1, e2] = [new Error(), new Error()];
+      const type = 'disconnect';
+
+      processManager.addHook({ handler: () => { throw e1; }, type });
+      processManager.addHook({ handler: () => { throw e2; }, type });
+
+      return processManager.hook(type).then(() => {
+        expect(processManager.errors).toHaveLength(2);
+        expect(processManager.errors).toContain(e1);
+        expect(processManager.errors).toContain(e2);
       });
     });
 
