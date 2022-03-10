@@ -1,5 +1,5 @@
 *
 **/
 .*
-!index.js
+!src/**
 !yarn.lock
