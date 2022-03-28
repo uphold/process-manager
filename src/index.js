@@ -77,6 +77,11 @@ class ProcessManager {
 
   hook(type, ...args) {
     const hooks = this.hooks.filter(hook => hook.type === type);
+
+    if (hooks.length === 0) {
+      return;
+    }
+
     const promises = hooks.map(({ handler, timeoutError }) => {
       return Promise.race([
         utils.reflect(handler, args),

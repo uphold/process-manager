@@ -19,7 +19,7 @@
   "scripts": {
     "changelog": "github-changelog-generator --owner=uphold --repo=process-manager --future-release=v$npm_package_version > CHANGELOG.md",
     "lint": "eslint src test",
-    "test": "jest --coverage --runInBand --verbose",
+    "test": "jest --coverage --verbose",
     "version": "npm run changelog && git add -A CHANGELOG.md"
   },
   "dependencies": {
@@ -29,8 +29,12 @@
     "@uphold/github-changelog-generator": "^0.4.1",
     "eslint": "^3.12.2",
     "eslint-config-seegno": "^8.0.1",
-    "jest": "^19.0.1",
+    "jest": "^27.5.1",
     "pre-commit": "^1.2.2"
+  },
+  "jest": {
+    "restoreMocks": true,
+    "testEnvironment": "node"
   },
   "engines": {
     "node": ">=7.6"
