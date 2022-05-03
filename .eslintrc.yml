@@ -1,9 +1,5 @@
 extends:
-  - seegno
-
-env:
-  jasmine: true
-  jest: true
+  - uphold
 
 rules:
   no-process-env: 0

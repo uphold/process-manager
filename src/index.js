@@ -18,7 +18,6 @@ class TimeoutError extends Error {}
  */
 
 class ProcessManager {
-
   /**
    * Constructor.
    */
@@ -37,7 +36,12 @@ class ProcessManager {
    */
 
   addHook({ type, handler, name = 'a handler' }) {
-    this.hooks.push({ handler, name, timeoutError: new TimeoutError(`${name} took too long to complete ${type} hook`), type });
+    this.hooks.push({
+      handler,
+      name,
+      timeoutError: new TimeoutError(`${name} took too long to complete ${type} hook`),
+      type
+    });
 
     log.info(`New handler added for hook ${type}`);
   }
@@ -83,10 +87,7 @@ class ProcessManager {
     }
 
     const promises = hooks.map(({ handler, timeoutError }) => {
-      return Promise.race([
-        utils.reflect(handler, args),
-        utils.timeout(this.timeout, timeoutError)
-      ]);
+      return Promise.race([utils.reflect(handler, args), utils.timeout(this.timeout, timeoutError)]);
     });
 
     return Promise.all(promises).then(results => {
@@ -142,14 +143,16 @@ class ProcessManager {
     }
 
     const id = Symbol();
-    const chain = utils.reflect(fn, args)
-      .then(error => {
-        this.running.splice(this.running.findIndex(chain => chain.id === id), 1);
+    const chain = utils.reflect(fn, args).then(error => {
+      this.running.splice(
+        this.running.findIndex(chain => chain.id === id),
+        1
+      );
 
-        if (error || exit) {
-          this.shutdown({ error });
-        }
-      });
+      if (error || exit) {
+        this.shutdown({ error });
+      }
+    });
 
     chain.id = id;
 
