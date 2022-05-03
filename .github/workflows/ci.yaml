@@ -6,7 +6,7 @@ jobs:
   test:
     strategy:
       matrix:
-        nodeVersion: [10, 12, 14, 16]
+        nodeVersion: [14, 16, 18]
 
     name: Tests
     runs-on: ubuntu-latest
