@@ -1,5 +1,11 @@
 # Changelog
 
+## [v3.0.0](https://github.com/uphold/process-manager/releases/tag/v3.0.0) (2022-07-27)
+- Bump vulnerable dependencies [\#32](https://github.com/uphold/process-manager/pull/32) ([jspranger](https://github.com/jspranger))
+- Update linting rules [\#31](https://github.com/uphold/process-manager/pull/31) ([Americas](https://github.com/Americas))
+- Refactor package [\#29](https://github.com/uphold/process-manager/pull/29) ([Americas](https://github.com/Americas))
+- Fix changelog [\#28](https://github.com/uphold/process-manager/pull/28) ([Americas](https://github.com/Americas))
+
 ## [v2.0.1](https://github.com/uphold/process-manager/releases/tag/v2.0.1) (2018-08-14)
 - Update lodash to fix vulnerability [\#27](https://github.com/uphold/process-manager/pull/27) ([Americas](https://github.com/Americas))
 
