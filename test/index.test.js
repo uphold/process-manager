@@ -13,6 +13,12 @@ describe('ProcessManager', () => {
     jest.spyOn(process, 'on').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
+    const utils = require('../src/utils');
+
+    jest
+      .spyOn(utils, 'getDefaultLogger')
+      .mockImplementationOnce(() => ({ error: () => {}, info: () => {}, warn: () => {} }));
+
     processManager = require('../src');
   });
 
@@ -63,6 +69,44 @@ describe('ProcessManager', () => {
   });
 
   describe('configure()', () => {
+    test('keeps old logger instance if nothing is passed', () => {
+      const currentLogger = processManager.log;
+
+      expect(processManager.log).toBe(currentLogger);
+
+      processManager.configure();
+
+      expect(processManager.log).toBe(currentLogger);
+    });
+
+    test('throws an error if the logger instance is invalid', () => {
+      expect(() => processManager.configure({ log: 'foo' })).toThrow(new Error('Logger instance is invalid'));
+    });
+
+    test('throws an error if the logger instance is missing a method', () => {
+      expect(() => processManager.configure({ log: {} })).toThrow(
+        new Error(`Logger instance is missing required log method 'info'`)
+      );
+    });
+
+    test('throws an error if a logger instance method is not a function', () => {
+      expect(() => processManager.configure({ log: { info: 'foo' } })).toThrow(
+        new Error(`Logger instance log method 'info' is not a function`)
+      );
+    });
+
+    test('updates the logger instance', () => {
+      const newLogger = { error: () => {}, info: () => {}, warn: () => {} };
+      const oldLogger = processManager.log;
+
+      expect(processManager.log).toBe(oldLogger);
+
+      processManager.configure({ log: newLogger });
+
+      expect(processManager.log).toBe(newLogger);
+      expect(processManager.log).not.toBe(oldLogger);
+    });
+
     test('keeps old timeout if nothing is passed', () => {
       expect(processManager.timeout).toBe(30000);
 

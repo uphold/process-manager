@@ -177,7 +177,14 @@ processManager.addHook({
 
 ## Debug
 
-Enable verbose debugging by setting the DEBUG environment variable to DEBUG=process-manager.
+Enable verbose debugging by configuring your own logger and passing it to `proccessManager.configure({ log: myCustomLogger })`.
+
+The minimum requirements for it to work is that the logger must be Object-like and have functions assigned to properties `info`, `warn`, and `error`.
+The functions should be able to handle two different argument signatures:
+- log.<level>(message)
+- log.<level>(fields, message)
+
+Most javascript loggers should use this format (this one was derived from [bunyan](https://www.npmjs.com/package/bunyan))
 
 ## Release
 
