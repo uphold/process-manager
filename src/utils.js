@@ -16,6 +16,26 @@ module.exports.deferred = function () {
 };
 
 /**
+ * Returns a Console instance as a default logger.
+ */
+
+module.exports.getDefaultLogger = function () {
+  return console;
+};
+
+/**
+ * Wraps a function and makes it return undefined on success or an error if it throws.
+ */
+
+module.exports.reflect = async function (thenable, args = []) {
+  try {
+    await thenable(...args);
+  } catch (error) {
+    return error;
+  }
+};
+
+/**
  * Creates promise that will resolve after the given time (in ms).
  */
 
@@ -24,13 +44,25 @@ module.exports.timeout = function (ms, returnValue) {
 };
 
 /**
- * Wraps a function and makes it return undefined on success or an error if it throws.
+ * Validate logger.
  */
 
-module.exports.reflect = async function (thenable, args) {
-  try {
-    await thenable(...args);
-  } catch (error) {
-    return error;
+module.exports.validateLogger = function (logger) {
+  if (typeof logger !== 'object') {
+    throw new Error('Logger instance is invalid');
   }
+
+  const requiredLogMethods = ['info', 'warn', 'error'];
+
+  for (const logMethod of requiredLogMethods) {
+    if (!logger[logMethod]) {
+      throw new Error(`Logger instance is missing required log method '${logMethod}'`);
+    }
+
+    if (typeof logger[logMethod] !== 'function') {
+      throw new Error(`Logger instance log method '${logMethod}' is not a function`);
+    }
+  }
+
+  return logger;
 };

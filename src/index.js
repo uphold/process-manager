@@ -4,7 +4,6 @@
  * Module dependencies.
  */
 
-const log = require('debugnyan')('process-manager');
 const utils = require('./utils');
 
 /**
@@ -26,6 +25,7 @@ class ProcessManager {
     this.errors = [];
     this.forceShutdown = utils.deferred();
     this.hooks = [];
+    this.log = utils.getDefaultLogger();
     this.running = [];
     this.terminating = false;
     this.timeout = 30000;
@@ -43,14 +43,18 @@ class ProcessManager {
       type
     });
 
-    log.info(`New handler added for hook ${type}`);
+    this.log.info(`New handler added for hook ${type}`);
   }
 
   /**
    * Configure `ProcessManager`.
    */
 
-  configure({ timeout } = {}) {
+  configure({ log, timeout } = {}) {
+    if (log) {
+      this.log = utils.validateLogger(log);
+    }
+
     this.timeout = Number(timeout) || this.timeout;
   }
 
@@ -60,7 +64,7 @@ class ProcessManager {
 
   exit() {
     if (this.errors.length > 0) {
-      log.error(...this.errors);
+      this.log.error({ errors: this.errors }, 'Exiting with errors');
 
       // Output console to error in case no `DEBUG` namespace has been set.
       // This mimicks the default node behaviour of not silencing errors.
@@ -93,7 +97,7 @@ class ProcessManager {
     return Promise.all(promises).then(results => {
       for (const result of results) {
         if (result instanceof TimeoutError) {
-          log.info(`Timeout: ${result.message}`);
+          this.log.warn(`Timeout: ${result.message}`);
         } else if (result) {
           this.errors.push(result);
         }
@@ -180,18 +184,20 @@ class ProcessManager {
 
     this.terminating = true;
 
-    log.info('Starting shutdown');
+    this.log.info('Starting shutdown');
 
     const gracefulShutdown = Promise.all(this.running)
-      .then(() => log.info('All running instances have stopped'))
+      .then(() => this.log.info('All running instances have stopped'))
       .then(() => this.hook('drain'))
-      .then(() => log.info(`${this.hooks.filter(hook => hook.type === 'drain').length} server(s) drained`))
+      .then(() => this.log.info(`${this.hooks.filter(hook => hook.type === 'drain').length} server(s) drained`))
       .then(() => this.hook('disconnect'))
-      .then(() => log.info(`${this.hooks.filter(hook => hook.type === 'disconnect').length} service(s) disconnected`))
+      .then(() =>
+        this.log.info(`${this.hooks.filter(hook => hook.type === 'disconnect').length} service(s) disconnected`)
+      )
       .then(() => this.hook('exit', this.errors));
 
     Promise.race([gracefulShutdown, this.forceShutdown.promise])
-      .catch(() => log.info('Forced shutdown, skipped waiting'))
+      .catch(() => this.log.warn('Forced shutdown, skipped waiting'))
       .then(() => this.exit());
   }
 }
@@ -208,7 +214,7 @@ const processManager = new ProcessManager();
 
 // istanbul ignore next
 process.on('exit', code => {
-  log.info(`Exiting with status ${code}`);
+  processManager.log.info(`Exiting with status ${code}`);
 });
 
 /**
@@ -216,7 +222,7 @@ process.on('exit', code => {
  */
 
 process.on('unhandledRejection', error => {
-  log.info('Caught rejection', error);
+  processManager.log.warn(error, 'Caught rejection');
 
   processManager.shutdown({ error });
 });
@@ -226,7 +232,7 @@ process.on('unhandledRejection', error => {
  */
 
 process.on('uncaughtException', error => {
-  log.info('Caught exception', error);
+  processManager.log.warn(error, 'Caught exception');
 
   processManager.shutdown({ error });
 });
@@ -236,7 +242,7 @@ process.on('uncaughtException', error => {
  */
 
 process.on('SIGINT', () => {
-  log.info('Caught SIGINT');
+  processManager.log.warn('Caught SIGINT');
 
   processManager.shutdown({ force: processManager.terminating });
 });
@@ -246,12 +252,12 @@ process.on('SIGINT', () => {
  */
 
 process.on('SIGTERM', () => {
-  log.info('Caught SIGTERM');
+  processManager.log.warn('Caught SIGTERM');
 
   processManager.shutdown();
 });
 
-log.info('Process manager initialized');
+processManager.log.info('Process manager initialized');
 
 /**
  * Export `processManager`.
