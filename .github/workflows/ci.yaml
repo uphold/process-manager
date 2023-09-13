@@ -6,7 +6,7 @@ jobs:
   test:
     strategy:
       matrix:
-        nodeVersion: [14, 16, 18]
+        nodeVersion: [18, 20]
 
     name: Tests
     runs-on: ubuntu-latest
@@ -15,8 +15,11 @@ jobs:
       image: node:${{ matrix.nodeVersion }}-alpine
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
       - run: yarn lint
+
       - run: yarn test
