@@ -4,6 +4,7 @@
  * Module dependencies.
  */
 
+const HealthMonitor = require('./health-monitor');
 const utils = require('./utils');
 
 /**
@@ -24,11 +25,20 @@ class ProcessManager {
   constructor() {
     this.errors = [];
     this.forceShutdown = utils.deferred();
+    this.healthMonitor = new HealthMonitor();
     this.hooks = [];
     this.log = utils.getDefaultLogger();
     this.running = [];
     this.terminating = false;
     this.timeout = 30000;
+  }
+
+  /**
+   * Add health monitor check.
+   */
+
+  addHealthCheck(...args) {
+    this.healthMonitor.addCheck(...args);
   }
 
   /**
@@ -77,6 +87,17 @@ class ProcessManager {
     }
 
     process.exit();
+  }
+
+  /**
+   * Get health monitor status.
+   */
+
+  getHealthStatus() {
+    return {
+      global: this.healthMonitor.globalState,
+      individual: this.healthMonitor.states
+    };
   }
 
   /**
@@ -190,6 +211,7 @@ class ProcessManager {
       .then(() => this.log.info('All running instances have stopped'))
       .then(() => this.hook('drain'))
       .then(() => this.log.info(`${this.hooks.filter(hook => hook.type === 'drain').length} server(s) drained`))
+      .then(() => this.healthMonitor.cleanup())
       .then(() => this.hook('disconnect'))
       .then(() =>
         this.log.info(`${this.hooks.filter(hook => hook.type === 'disconnect').length} service(s) disconnected`)

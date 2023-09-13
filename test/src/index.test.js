@@ -13,13 +13,13 @@ describe('ProcessManager', () => {
     jest.spyOn(process, 'on').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    const utils = require('../src/utils');
+    const utils = require('../../src/utils');
 
     jest
       .spyOn(utils, 'getDefaultLogger')
       .mockImplementationOnce(() => ({ error: () => {}, info: () => {}, warn: () => {} }));
 
-    processManager = require('../src');
+    processManager = require('../../src');
   });
 
   describe('constructor()', () => {
@@ -34,6 +34,17 @@ describe('ProcessManager', () => {
       expect(processManager.running).toEqual([]);
       expect(processManager.terminating).toEqual(false);
       expect(processManager.timeout).toEqual(30000);
+    });
+  });
+
+  describe('addHealthCheck()', () => {
+    test('calls `this.healthMonitor.addCheck()`', () => {
+      jest.spyOn(processManager.healthMonitor, 'addCheck').mockImplementation(() => {});
+
+      processManager.addHealthCheck('foo', 'bar');
+
+      expect(processManager.healthMonitor.addCheck).toHaveBeenCalledTimes(1);
+      expect(processManager.healthMonitor.addCheck).toHaveBeenCalledWith('foo', 'bar');
     });
   });
 
@@ -166,6 +177,12 @@ describe('ProcessManager', () => {
       expect(console.error).not.toHaveBeenCalled();
 
       delete process.env.DEBUG;
+    });
+  });
+
+  describe('getHealthStatus()', () => {
+    test('returns the current health state', () => {
+      expect(processManager.getHealthStatus()).toEqual({ global: 'unknown', individual: {} });
     });
   });
 
