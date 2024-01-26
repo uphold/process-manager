@@ -23,10 +23,10 @@ class ProcessManager {
 
   constructor() {
     this.errors = [];
-    this.forceShutdown = utils.deferred();
     this.hooks = [];
     this.log = utils.getDefaultLogger();
-    this.running = [];
+    this.running = new Set();
+    this.startedShutdown = false;
     this.terminating = false;
     this.timeout = 30000;
   }
@@ -109,16 +109,14 @@ class ProcessManager {
    * Handle a loop routine.
    */
 
-  loop(fn, { interval = 0 } = {}) {
-    return (async () => {
-      while (!this.terminating) {
-        await this.run(fn, { exit: false });
+  async loop(fn, { interval = 0 } = {}) {
+    while (!this.terminating) {
+      await this.run(fn, { exit: false });
 
-        if (!this.terminating) {
-          await utils.timeout(interval);
-        }
+      if (!this.terminating) {
+        await utils.timeout(interval);
       }
-    })();
+    }
   }
 
   /**
@@ -134,71 +132,67 @@ class ProcessManager {
    */
 
   once(fn) {
-    return this.run(fn);
+    this.run(fn);
   }
 
   /**
    * Routine handler.
    */
 
-  run(fn, { args = [], exit = true } = {}) {
+  async run(fn, { args = [], exit = true } = {}) {
     if (this.terminating) {
       return;
     }
 
     const id = Symbol();
-    const chain = utils.reflect(fn, args).then(error => {
-      this.running.splice(
-        this.running.findIndex(chain => chain.id === id),
-        1
-      );
 
-      if (error || exit) {
-        this.shutdown({ error });
-      }
-    });
+    this.running.add(id);
 
-    chain.id = id;
+    const error = await utils.reflect(fn, args);
 
-    this.running.push(chain);
+    this.running.delete(id);
 
-    return chain;
+    if (error || exit || this.terminating) {
+      await this.shutdown({ error });
+    }
   }
 
   /**
    * Shutdown process.
    */
 
-  shutdown({ error, force = false } = {}) {
+  async shutdown({ error, force = false } = {}) {
     if (error) {
       this.errors.push(error);
     }
 
     if (force) {
-      this.forceShutdown.reject();
-    }
+      this.log.warn('Forced shutdown, skipped waiting');
 
-    if (this.terminating) {
-      return;
+      return this.exit();
     }
 
     this.terminating = true;
 
+    if (this.running.size || this.startedShutdown) {
+      return;
+    }
+
+    this.startedShutdown = true;
+
     this.log.info('Starting shutdown');
 
-    const gracefulShutdown = Promise.all(this.running)
-      .then(() => this.log.info('All running instances have stopped'))
-      .then(() => this.hook('drain'))
-      .then(() => this.log.info(`${this.hooks.filter(hook => hook.type === 'drain').length} server(s) drained`))
-      .then(() => this.hook('disconnect'))
-      .then(() =>
-        this.log.info(`${this.hooks.filter(hook => hook.type === 'disconnect').length} service(s) disconnected`)
-      )
-      .then(() => this.hook('exit', this.errors));
+    await this.hook('drain');
 
-    Promise.race([gracefulShutdown, this.forceShutdown.promise])
-      .catch(() => this.log.warn('Forced shutdown, skipped waiting'))
-      .then(() => this.exit());
+    this.log.info(`${this.hooks.filter(({ type }) => type === 'drain').length} server(s) drained`);
+
+    await this.hook('disconnect');
+
+    this.log.info(`${this.hooks.filter(({ type }) => type === 'disconnect').length} service(s) disconnected`);
+
+    await this.hook('exit', this.errors);
+
+    this.exit();
   }
 }
 
