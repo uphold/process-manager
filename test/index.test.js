@@ -1,4 +1,11 @@
 /* eslint no-console: 0 */
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+const utils = require('../src/utils');
 
 /**
  * Test `ProcessManager`.
@@ -25,13 +32,8 @@ describe('ProcessManager', () => {
   describe('constructor()', () => {
     test('sets the initial state', () => {
       expect(processManager.errors).toEqual([]);
-      expect(processManager.forceShutdown).toMatchObject({
-        promise: expect.any(Promise),
-        reject: expect.any(Function),
-        resolve: expect.any(Function)
-      });
       expect(processManager.hooks).toEqual([]);
-      expect(processManager.running).toEqual([]);
+      expect(processManager.running).toEqual(new Set());
       expect(processManager.terminating).toEqual(false);
       expect(processManager.timeout).toEqual(30000);
     });
@@ -245,123 +247,95 @@ describe('ProcessManager', () => {
   });
 
   describe('shutdown()', () => {
-    test('sets `terminating` to true', () => {
+    test('sets `processManager.terminating` to true', () => {
       processManager.shutdown();
 
       expect(processManager.terminating).toBe(true);
     });
 
-    test('creates `forceShutdown` promise', () => {
-      processManager.shutdown();
+    test('calls `processManager.exit()` if `force` is set to `true`', async () => {
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {});
 
-      expect(processManager.forceShutdown.promise).toBeInstanceOf(Promise);
+      await processManager.shutdown({ force: true });
+
+      expect(processManager.exit).toHaveBeenCalledTimes(1);
     });
 
-    test('with `force` set to `true` it creates `forceShutdown` promise in reject state', done => {
-      processManager.shutdown({ force: true });
+    test('calls hook `drain`', async () => {
+      jest.spyOn(processManager, 'hook').mockImplementation(() => {});
 
-      processManager.forceShutdown.promise.catch(done);
+      processManager.addHook({ handler() {}, type: 'drain' });
+
+      await processManager.shutdown();
+
+      expect(processManager.hook).toHaveBeenCalledWith('drain');
     });
 
-    test('calls hook `drain`', done => {
-      jest.spyOn(processManager, 'hook');
+    test('calls hook `disconnect`', async () => {
+      jest.spyOn(processManager, 'hook').mockImplementation(() => {});
 
-      processManager.addHook({
-        handler() {
-          expect(processManager.hook).toHaveBeenCalledWith('drain');
+      processManager.addHook({ handler() {}, type: 'disconnect' });
 
-          done();
-        },
-        type: 'drain'
-      });
-      processManager.configure({ timeout: 1 });
+      await processManager.shutdown();
 
-      processManager.shutdown();
+      expect(processManager.hook).toHaveBeenCalledWith('disconnect');
     });
 
-    test('calls hook `disconnect`', done => {
-      jest.spyOn(processManager, 'hook');
+    test('calls hook `exit`', async () => {
+      jest.spyOn(processManager, 'hook').mockImplementation(() => {});
 
-      processManager.addHook({
-        handler() {
-          expect(processManager.hook).toHaveBeenCalledWith('disconnect');
+      processManager.addHook({ handler() {}, type: 'exit' });
 
-          done();
-        },
-        type: 'disconnect'
-      });
-      processManager.configure({ timeout: 1 });
+      await processManager.shutdown();
 
-      processManager.shutdown();
+      expect(processManager.hook).toHaveBeenCalledWith('exit', []);
     });
 
-    test('calls hook `exit`', done => {
-      jest.spyOn(processManager, 'hook');
+    test('calls `processManager.exit()`', async () => {
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {});
 
-      processManager.addHook({
-        handler() {
-          expect(processManager.hook).toHaveBeenCalledWith('exit', []);
+      await processManager.shutdown();
 
-          done();
-        },
-        type: 'exit'
-      });
-      processManager.configure({ timeout: 1 });
-
-      processManager.shutdown();
+      expect(processManager.exit).toHaveBeenCalledTimes(1);
     });
 
-    test('calls `processManager.exit`', done => {
-      jest.spyOn(processManager, 'exit').mockImplementation(() => {
-        done();
-      });
-
-      processManager.shutdown();
-    });
-
-    test('adds error to `processManager.errors`', done => {
+    test('adds error to `processManager.errors`', async () => {
       const error = new Error();
 
-      jest.spyOn(processManager, 'exit').mockImplementation(() => {
-        expect(processManager.errors).toHaveLength(1);
-        expect(processManager.errors).toContain(error);
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {});
 
-        expect(processManager.exit).toHaveBeenCalled();
-        expect(processManager.exit).toHaveBeenCalledTimes(1);
+      await processManager.shutdown({ error });
 
-        done();
-      });
-
-      processManager.shutdown({ error });
+      expect(processManager.errors).toHaveLength(1);
+      expect(processManager.errors).toContain(error);
     });
 
-    test('adds errors to `processManager.errors` if called more than once', done => {
+    test('adds errors to `processManager.errors` if called more than once', async () => {
       const [e1, e2] = [new Error(), new Error()];
 
-      jest.spyOn(processManager, 'exit').mockImplementation(() => {
-        expect(processManager.errors).toHaveLength(2);
-        expect(processManager.errors).toContain(e1);
-        expect(processManager.errors).toContain(e2);
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {});
 
-        expect(processManager.exit).toHaveBeenCalled();
-        expect(processManager.exit).toHaveBeenCalledTimes(1);
+      await Promise.all([processManager.shutdown({ error: e1 }), processManager.shutdown({ error: e2 })]);
 
-        done();
-      });
-
-      processManager.shutdown({ error: e1 });
-      processManager.shutdown({ error: e2 });
+      expect(processManager.errors).toHaveLength(2);
+      expect(processManager.errors).toContain(e1);
+      expect(processManager.errors).toContain(e2);
     });
 
-    test('forces shutdown if `processManager.shutdown` is called with force `true`', done => {
-      jest.spyOn(processManager, 'exit').mockImplementation(() => {
-        processManager.forceShutdown.promise.catch(done);
+    test('forces shutdown if `processManager.shutdown()` is called with force `true`', async () => {
+      const deferred = utils.deferred();
+
+      jest.spyOn(processManager, 'exit').mockImplementation(() => {});
+
+      processManager.once(async () => {
+        await deferred.promise;
       });
 
-      processManager.loop(async () => {}, { interval: 1000 });
+      await processManager.shutdown({ force: true });
 
-      processManager.shutdown();
-      processManager.shutdown({ force: true });
+      expect(processManager.exit).toHaveBeenCalledTimes(1);
+
+      deferred.resolve();
     });
   });
 
@@ -449,29 +423,17 @@ describe('ProcessManager', () => {
   });
 
   describe('run()', () => {
-    test('does nothing if `processManager` is terminating', () => {
+    test('does nothing if `processManager.terminating` is true', async () => {
       const fn = jest.fn();
 
       processManager.terminating = true;
 
-      const result = processManager.run(() => fn());
+      await processManager.run(fn);
 
       expect(fn).not.toHaveBeenCalled();
-      expect(result).toBeUndefined();
     });
 
-    test('returns the coroutine', done => {
-      jest.spyOn(processManager, 'shutdown').mockImplementation(() => {
-        done();
-      });
-
-      const chain = processManager.run(() => {});
-
-      expect(chain.then).toBeDefined();
-      expect(typeof chain.id).toBe('symbol');
-    });
-
-    test('calls `shutdown` with error if an error is thrown while running the function', async () => {
+    test('calls `processManager.shutdown()` with error if an error is thrown while running the function', async () => {
       const error = new Error();
 
       jest.spyOn(processManager, 'shutdown');
