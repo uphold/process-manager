@@ -188,9 +188,7 @@ Most javascript loggers should use this format (this one was derived from [bunya
 
 ## Release
 
-```shell
-❯ npm version [<new version> | major | minor | patch] -m "Release %s"`
-```
+The release of a version is automated via the [release](https://github.com/uphold/process-manager/actions/workflows/release.yaml) GitHub workflow. Run it by clicking the "Run workflow" button.
 
 ## Test
 
