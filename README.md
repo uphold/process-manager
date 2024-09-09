@@ -201,8 +201,3 @@ To test using a local version of `node`, run:
 ## License
 
 MIT
-
-[npm-image]: https://img.shields.io/npm/v/@uphold/process-manager.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/@uphold/process-manager
-[travis-image]: https://img.shields.io/travis/uphold/process-manager.svg?style=flat-square
-[travis-url]: https://travis-ci.org/uphold/process-manager

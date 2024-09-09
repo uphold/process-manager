@@ -21,6 +21,9 @@
     "release": "release-it",
     "test": "jest --coverage --verbose"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@uphold/github-changelog-generator": "^3.4.0",
     "eslint": "~8.20.0",
