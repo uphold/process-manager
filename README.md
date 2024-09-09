@@ -5,7 +5,7 @@ A node.js process manager. This package handles a process's lifecycle, from runn
 ## Status
 
 [![NPM version](https://img.shields.io/npm/v/@uphold/process-manager.svg)](https://npmjs.org/package/@uphold/process-manager)
-[![Tests](https://github.com/uphold/process-manager/actions/workflows/tests.yaml/badge.svg)](https://github.com/uphold/process-manager/actions/workflows/tests.yaml)
+[![CI](https://github.com/uphold/process-manager/actions/workflows/ci.yaml/badge.svg)](https://github.com/uphold/process-manager/actions/workflows/ci.yaml)
 
 ## Installation
 
