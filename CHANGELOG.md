@@ -1,5 +1,15 @@
 # Changelog
 
+## [v4.0.0](https://github.com/uphold/process-manager/releases/tag/v4.0.0) (2024-09-10)
+- Add `npm whoami` to release workflow [\#47](https://github.com/uphold/process-manager/pull/47) ([satazor](https://github.com/satazor))
+- Fix CI badge in README [\#46](https://github.com/uphold/process-manager/pull/46) ([satazor](https://github.com/satazor))
+- Fix badges in README [\#45](https://github.com/uphold/process-manager/pull/45) ([satazor](https://github.com/satazor))
+- Add missing publish config to package.json [\#44](https://github.com/uphold/process-manager/pull/44) ([satazor](https://github.com/satazor))
+- Add release GitHub workflow [\#42](https://github.com/uphold/process-manager/pull/42) ([satazor](https://github.com/satazor))
+- Simplify methods by using async [\#39](https://github.com/uphold/process-manager/pull/39) ([Americas](https://github.com/Americas))
+- Update CI action [\#38](https://github.com/uphold/process-manager/pull/38) ([Americas](https://github.com/Americas))
+- Allow users of this package to configure the logger [\#34](https://github.com/uphold/process-manager/pull/34) ([Americas](https://github.com/Americas))
+
 ## [v3.0.0](https://github.com/uphold/process-manager/releases/tag/v3.0.0) (2022-07-27)
 - Bump vulnerable dependencies [\#32](https://github.com/uphold/process-manager/pull/32) ([jspranger](https://github.com/jspranger))
 - Update linting rules [\#31](https://github.com/uphold/process-manager/pull/31) ([Americas](https://github.com/Americas))
