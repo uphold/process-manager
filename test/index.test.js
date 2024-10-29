@@ -356,6 +356,33 @@ describe('ProcessManager', () => {
       expect(fn).toHaveBeenCalledTimes(3);
     });
 
+    test('handles dynamic interval', async () => {
+      const utils = require('../src/utils');
+
+      jest.spyOn(utils, 'timeout').mockImplementation(() => {});
+      const fn = jest.fn();
+
+      let i = 0;
+
+      await processManager.loop(
+        () => {
+          fn();
+
+          if (++i === 3) {
+            processManager.shutdown();
+          }
+
+          return i > 1 ? { interval: 1 } : undefined;
+        },
+        { interval: 10 }
+      );
+
+      expect(fn).toHaveBeenCalledTimes(3);
+      expect(utils.timeout).toHaveBeenCalledTimes(2);
+      expect(utils.timeout).toHaveBeenNthCalledWith(1, 10);
+      expect(utils.timeout).toHaveBeenNthCalledWith(2, 1);
+    });
+
     test('calls `shutdown` with error if an error is thrown while running the loop', async () => {
       const error = new Error();
 
