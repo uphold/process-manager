@@ -111,10 +111,10 @@ class ProcessManager {
 
   async loop(fn, { interval = 0 } = {}) {
     while (!this.terminating) {
-      await this.run(fn, { exit: false });
+      const result = await this.run(fn, { exit: false });
 
       if (!this.terminating) {
-        await utils.timeout(interval);
+        await utils.timeout(result?.interval ?? interval);
       }
     }
   }
@@ -148,13 +148,19 @@ class ProcessManager {
 
     this.running.add(id);
 
-    const error = await utils.reflect(fn, args);
+    const result = await utils.reflect(fn, args);
 
     this.running.delete(id);
 
+    const error = result instanceof Error ? result : undefined;
+
     if (error || exit || this.terminating) {
       await this.shutdown({ error });
+
+      return;
     }
+
+    return result;
   }
 
   /**

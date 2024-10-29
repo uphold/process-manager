@@ -31,9 +31,11 @@ describe('Utils', () => {
   });
 
   describe('reflect()', () => {
-    test('returns undefined if the passed function does not throw an error', async () => {
-      await expect(utils.reflect(() => 'foo')).resolves.toBeUndefined();
-      await expect(utils.reflect(() => Promise.resolve('foo'))).resolves.toBeUndefined();
+    test('returns the result of the the passed function', async () => {
+      await expect(utils.reflect(() => {})).resolves.toBeUndefined();
+      await expect(utils.reflect(() => 'foo')).resolves.toBe('foo');
+      await expect(utils.reflect(() => Promise.resolve('foo'))).resolves.toBe('foo');
+      await expect(utils.reflect(() => Promise.resolve({ foo: 1 }))).resolves.toEqual({ foo: 1 });
     });
 
     test('returns an error if the passed function throws an error', async () => {

@@ -24,12 +24,12 @@ module.exports.getDefaultLogger = function () {
 };
 
 /**
- * Wraps a function and makes it return undefined on success or an error if it throws.
+ * Wraps a function and makes it return the function result on success or an error if it throws.
  */
 
 module.exports.reflect = async function (thenable, args = []) {
   try {
-    await thenable(...args);
+    return await thenable(...args);
   } catch (error) {
     return error;
   }
