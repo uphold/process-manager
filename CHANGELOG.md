@@ -1,5 +1,8 @@
 # Changelog
 
+## [v4.1.0](https://github.com/uphold/process-manager/releases/tag/v4.1.0) (2024-11-20)
+- Loop with dynamic interval [\#48](https://github.com/uphold/process-manager/pull/48) ([jpuh](https://github.com/jpuh))
+
 ## [v4.0.0](https://github.com/uphold/process-manager/releases/tag/v4.0.0) (2024-09-10)
 - Add `npm whoami` to release workflow [\#47](https://github.com/uphold/process-manager/pull/47) ([satazor](https://github.com/satazor))
 - Fix CI badge in README [\#46](https://github.com/uphold/process-manager/pull/46) ([satazor](https://github.com/satazor))
