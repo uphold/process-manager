@@ -1,5 +1,8 @@
 # Changelog
 
+## [v4.2.1](https://github.com/uphold/process-manager/releases/tag/v4.2.1) (2024-12-20)
+- Fix hook not checking if values are errors [\#50](https://github.com/uphold/process-manager/pull/50) ([satazor](https://github.com/satazor))
+
 ## [v4.2.0](https://github.com/uphold/process-manager/releases/tag/v4.2.0) (2024-12-20)
 - Flush stdout and stderr before exiting [\#49](https://github.com/uphold/process-manager/pull/49) ([satazor](https://github.com/satazor))
 
