@@ -238,6 +238,13 @@ describe('ProcessManager', () => {
         },
         type
       });
+      processManager.addHook({
+        handler: () => {
+          // This should be ignored since it's not an Error instance.
+          return 'foo';
+        },
+        type
+      });
       processManager.configure({ timeout: 1 });
 
       expect(processManager.errors).toHaveLength(0);
