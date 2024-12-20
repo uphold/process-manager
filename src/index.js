@@ -198,7 +198,21 @@ class ProcessManager {
 
     await this.hook('exit', this.errors);
 
+    this.log.info('Flushing output');
+
+    await this.flushOutput();
+
     this.exit();
+  }
+
+  async flushOutput() {
+    // Process stdout and stderr can be in non-blocking mode so writes to it may not be flushed when the process exits.
+    // To ensure that all output is flushed before the process exits, we can write an empty string to stdout and stderr,
+    // and wait for the write operation to complete.
+    await Promise.all([
+      new Promise(resolve => process.stdout.write('', resolve)),
+      new Promise(resolve => process.stderr.write('', resolve))
+    ]);
   }
 }
 

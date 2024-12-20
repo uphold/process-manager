@@ -19,6 +19,8 @@ describe('ProcessManager', () => {
     jest.spyOn(process, 'exit').mockImplementation(() => {});
     jest.spyOn(process, 'on').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(process.stderr, 'write').mockImplementation((data, cb) => cb?.());
+    jest.spyOn(process.stdout, 'write').mockImplementation((data, cb) => cb?.());
 
     const utils = require('../src/utils');
 
@@ -289,6 +291,15 @@ describe('ProcessManager', () => {
       await processManager.shutdown();
 
       expect(processManager.hook).toHaveBeenCalledWith('exit', []);
+    });
+
+    test('flushes stdout and stderr', async () => {
+      await processManager.shutdown();
+
+      expect(process.stdout.write).toHaveBeenCalledTimes(1);
+      expect(process.stdout.write).toHaveBeenCalledWith('', expect.any(Function));
+      expect(process.stderr.write).toHaveBeenCalledTimes(1);
+      expect(process.stderr.write).toHaveBeenCalledWith('', expect.any(Function));
     });
 
     test('calls `processManager.exit()`', async () => {
