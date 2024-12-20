@@ -98,7 +98,7 @@ class ProcessManager {
       for (const result of results) {
         if (result instanceof TimeoutError) {
           this.log.warn(`Timeout: ${result.message}`);
-        } else if (result) {
+        } else if (result instanceof Error) {
           this.errors.push(result);
         }
       }
@@ -204,6 +204,10 @@ class ProcessManager {
 
     this.exit();
   }
+
+  /**
+   * Wait for output to flush.
+   */
 
   async flushOutput() {
     // Process stdout and stderr can be in non-blocking mode so writes to it may not be flushed when the process exits.
