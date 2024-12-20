@@ -1,5 +1,8 @@
 # Changelog
 
+## [v4.2.0](https://github.com/uphold/process-manager/releases/tag/v4.2.0) (2024-12-20)
+- Flush stdout and stderr before exiting [\#49](https://github.com/uphold/process-manager/pull/49) ([satazor](https://github.com/satazor))
+
 ## [v4.1.0](https://github.com/uphold/process-manager/releases/tag/v4.1.0) (2024-11-20)
 - Loop with dynamic interval [\#48](https://github.com/uphold/process-manager/pull/48) ([jpuh](https://github.com/jpuh))
 
