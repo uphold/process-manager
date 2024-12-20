@@ -66,6 +66,18 @@ processManager.loop(async () => {
 }, { interval: 600 });
 ```
 
+You can also return an object with an `interval` property to override the next interval.
+
+```javascript
+const processManager = require('process-manager');
+
+processManager.loop(async () => {
+  console.log(await client.getSomeInfo());
+
+  return { interval: 1000 };
+}, { interval: 600 });
+```
+
 ### on(fn)
 
 This lifecycle is used to get a function suited for using with an event emitter. It does not exit unless something goes wrong.
