@@ -275,8 +275,6 @@ process.on('SIGTERM', () => {
   processManager.shutdown();
 });
 
-processManager.log.info('Process manager initialized');
-
 /**
  * Export `processManager`.
  */
