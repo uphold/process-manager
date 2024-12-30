@@ -1,5 +1,8 @@
 # Changelog
 
+## [v4.2.2](https://github.com/uphold/process-manager/releases/tag/v4.2.2) (2024-12-30)
+- Remove useless log [\#51](https://github.com/uphold/process-manager/pull/51) ([satazor](https://github.com/satazor))
+
 ## [v4.2.1](https://github.com/uphold/process-manager/releases/tag/v4.2.1) (2024-12-20)
 - Fix hook not checking if values are errors [\#50](https://github.com/uphold/process-manager/pull/50) ([satazor](https://github.com/satazor))
 

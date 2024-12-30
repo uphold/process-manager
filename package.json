@@ -1,6 +1,6 @@
 {
   "name": "@uphold/process-manager",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "A module for handling the lifecycle of a node process",
   "keywords": [
     "graceful",
