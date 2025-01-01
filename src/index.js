@@ -64,7 +64,8 @@ class ProcessManager {
 
   exit() {
     if (this.errors.length > 0) {
-      this.log.error({ errors: this.errors }, 'Exiting with errors');
+      this.log.error(`Exiting with ${this.errors.length} error${this.errors.length > 1 ? 's' : ''}`);
+      this.errors.forEach(err => this.log.error(err));
 
       // Output console to error in case no `DEBUG` namespace has been set.
       // This mimicks the default node behaviour of not silencing errors.
