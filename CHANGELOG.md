@@ -1,5 +1,9 @@
 # Changelog
 
+## [v4.3.0](https://github.com/uphold/process-manager/releases/tag/v4.3.0) (2025-01-02)
+- Remove `DEBUG` check to fallback to console.error [\#53](https://github.com/uphold/process-manager/pull/53) ([satazor](https://github.com/satazor))
+- Print errors on each line [\#52](https://github.com/uphold/process-manager/pull/52) ([satazor](https://github.com/satazor))
+
 ## [v4.2.2](https://github.com/uphold/process-manager/releases/tag/v4.2.2) (2024-12-30)
 - Remove useless log [\#51](https://github.com/uphold/process-manager/pull/51) ([satazor](https://github.com/satazor))
 
