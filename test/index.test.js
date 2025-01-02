@@ -151,26 +151,6 @@ describe('ProcessManager', () => {
       expect(process.exit).toHaveBeenCalled();
       expect(process.exit).toHaveBeenCalledWith(1);
     });
-
-    test('calls `console.error` if `DEBUG` is not set', () => {
-      processManager.errors = [new Error()];
-
-      processManager.exit();
-
-      expect(console.error).toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalledWith(...processManager.errors);
-    });
-
-    test('does not call `console.error` if `DEBUG` is set', () => {
-      process.env.DEBUG = 'foo';
-      processManager.errors = [new Error()];
-
-      processManager.exit();
-
-      expect(console.error).not.toHaveBeenCalled();
-
-      delete process.env.DEBUG;
-    });
   });
 
   describe('hook()', () => {

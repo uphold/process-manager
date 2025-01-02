@@ -67,13 +67,6 @@ class ProcessManager {
       this.log.error(`Exiting with ${this.errors.length} error${this.errors.length > 1 ? 's' : ''}`);
       this.errors.forEach(err => this.log.error(err));
 
-      // Output console to error in case no `DEBUG` namespace has been set.
-      // This mimicks the default node behaviour of not silencing errors.
-      if (!process.env.DEBUG) {
-        // eslint-disable-next-line no-console
-        console.error(...this.errors);
-      }
-
       return process.exit(1);
     }
 
