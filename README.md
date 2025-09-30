@@ -12,13 +12,13 @@ A node.js process manager. This package handles a process's lifecycle, from runn
 Install the package via **yarn**:
 
 ```shell
-❯ yarn add '@uphold/process-manager'
+yarn add '@uphold/process-manager'
 ```
 
 Or **npm**:
 
 ```shell
-❯ npm install '@uphold/process-manager' --save
+npm install '@uphold/process-manager' --save
 ```
 
 ## Usage
@@ -28,20 +28,22 @@ To use `process-manager` simply require it in your project.
 ```javascript
 const processManager = require('process-manager');
 
-// async/await
+// async/await.
 processManager.once(async () => {
   await foo.bar();
 });
 
-// Promise
-processManager.once(() => new Promise((resolve, reject) => {
-  foo.bar(err => {
-    if (err) return reject();
+// Promise.
+processManager.once(
+  () =>
+    new Promise((resolve, reject) => {
+      foo.bar((err) => {
+        if (err) return reject();
 
-    return resolve();
-  });
-}));
-
+        return resolve();
+      });
+    })
+);
 ```
 
 And it will now manage your node process.
@@ -50,20 +52,23 @@ And it will now manage your node process.
 
 This lifecycle is used to loop over a given function.
 
-#### Arguments
+#### Arguments (`loop`)
 
 - `fn` _(Function)_: the function to run.
 - `[options]` _(object)_: the options object.
 - `[options.interval=0]` _(integer)_: how long to wait (in miliseconds) before restarting the function.
 
-#### Example
+#### Example (`loop`)
 
 ```javascript
 const processManager = require('process-manager');
 
-processManager.loop(async () => {
-  console.log(await client.getSomeInfo());
-}, { interval: 600 });
+processManager.loop(
+  async () => {
+    console.log(await client.getSomeInfo());
+  },
+  { interval: 600 }
+);
 ```
 
 You can also return an object with an `interval` property to override the next interval.
@@ -71,22 +76,25 @@ You can also return an object with an `interval` property to override the next i
 ```javascript
 const processManager = require('process-manager');
 
-processManager.loop(async () => {
-  console.log(await client.getSomeInfo());
+processManager.loop(
+  async () => {
+    console.log(await client.getSomeInfo());
 
-  return { interval: 1000 };
-}, { interval: 600 });
+    return { interval: 1000 };
+  },
+  { interval: 600 }
+);
 ```
 
 ### on(fn)
 
 This lifecycle is used to get a function suited for using with an event emitter. It does not exit unless something goes wrong.
 
-#### Arguments
+#### Arguments (`on`)
 
 - `fn` _(Function)_: the function to run.
 
-#### Example
+#### Example (`on`)
 
 ```javascript
 const processManager = require('process-manager');
@@ -102,11 +110,11 @@ client.on('event', processManager.on(handler));
 
 This lifecycle is used to a given function and exit.
 
-#### Arguments
+#### Arguments (`once`)
 
 - `fn` _(Function)_: the function to run.
 
-#### Example
+#### Example (`once`)
 
 ```javascript
 const processManager = require('process-manager');
@@ -122,13 +130,13 @@ This function can be called to trigger a process shutdown. If passed an error as
 
 If called with `{ force: true }` it will skip waiting for running processes and immediately start disconnecting.
 
-#### Arguments
+#### Arguments (`shutdown`)
 
 - `[args]` _(object)_: the arguments object.
 - `[args.error]` _(Error)_: an error to add to the errors array.
 - `[args.force]` _(Boolean)_: a boolean that forces the shutdown to skip waiting for running processes.
 
-#### Example
+#### Example (`shutdown`)
 
 ```javascript
 const processManager = require('process-manager');
@@ -156,7 +164,7 @@ This hook is called right before the process exits. It passes an array of errors
 
 This function is used to add a hook for one of the types described above.
 
-#### Arguments
+#### Arguments (`addHook`)
 
 - `args.handler` _(Function)_: a function that returns a value or a thenable.
 - `args.type` _(string)_: the hook type.
@@ -182,7 +190,8 @@ const raven = Promise.promisifyAll(require('raven'));
 raven.config('https://******@sentry.io/<appId>').install();
 
 processManager.addHook({
-  handler: errors => Promise.map(errors, error => raven.captureExceptionAsync(error)),
+  handler: (errors) =>
+    Promise.map(errors, (error) => raven.captureExceptionAsync(error)),
   name: 'sentry',
   type: 'exit'
 });
@@ -194,8 +203,9 @@ Enable verbose debugging by configuring your own logger and passing it to `proce
 
 The minimum requirements for it to work is that the logger must be Object-like and have functions assigned to properties `info`, `warn`, and `error`.
 The functions should be able to handle two different argument signatures:
-- log.<level>(message)
-- log.<level>(fields, message)
+
+- log.`<level>`(message)
+- log.`<level>`(fields, message)
 
 Most javascript loggers should use this format (this one was derived from [bunyan](https://www.npmjs.com/package/bunyan))
 
@@ -208,7 +218,7 @@ The release of a version is automated via the [release](https://github.com/uphol
 To test using a local version of `node`, run:
 
 ```sh
-❯ yarn test
+yarn test
 ```
 
 ## License
