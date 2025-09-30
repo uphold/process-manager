@@ -35,7 +35,7 @@ class ProcessManager {
    * Add hook.
    */
 
-  addHook({ type, handler, name = 'a handler' }) {
+  addHook({ handler, name = 'a handler', type }) {
     this.hooks.push({
       handler,
       name,
