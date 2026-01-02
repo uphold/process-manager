@@ -19,7 +19,8 @@
   "scripts": {
     "lint": "eslint",
     "release": "release-it",
-    "test": "jest --coverage --verbose"
+    "test": "node --test $(find test -name '*.test.js')",
+    "test:coverage": "node --test --experimental-test-coverage $(find test -name '*.test.js')"
   },
   "publishConfig": {
     "access": "public"
@@ -29,13 +30,8 @@
     "@uphold/github-changelog-generator": "^4.0.2",
     "eslint": "~9.39.2",
     "eslint-config-uphold": "^6.7.2",
-    "jest": "^29.6.4",
     "prettier": "^3.7.4",
     "release-it": "^19.2.2"
-  },
-  "jest": {
-    "restoreMocks": true,
-    "testEnvironment": "node"
   },
   "engines": {
     "node": ">=20"
