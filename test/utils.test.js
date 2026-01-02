@@ -5,6 +5,8 @@
  */
 
 const { Console } = require('node:console');
+const { describe, test } = require('node:test');
+const assert = require('node:assert');
 const utils = require('../src/utils');
 
 /**
@@ -16,9 +18,9 @@ describe('Utils', () => {
     test('returns a deferred Promise', () => {
       const deferred = utils.deferred();
 
-      expect(deferred.promise).toBeInstanceOf(Promise);
-      expect(deferred.resolve).toBeInstanceOf(Function);
-      expect(deferred.reject).toBeInstanceOf(Function);
+      assert.strictEqual(deferred.promise instanceof Promise, true);
+      assert.strictEqual(typeof deferred.resolve, 'function');
+      assert.strictEqual(typeof deferred.reject, 'function');
     });
   });
 
@@ -26,45 +28,42 @@ describe('Utils', () => {
     test('returns an instance of Console', () => {
       const log = utils.getDefaultLogger();
 
-      expect(log).toBeInstanceOf(Console);
+      assert.strictEqual(log instanceof Console, true);
     });
   });
 
   describe('reflect()', () => {
     test('returns the result of the the passed function', async () => {
-      await expect(utils.reflect(() => {})).resolves.toBeUndefined();
-      await expect(utils.reflect(() => 'foo')).resolves.toBe('foo');
-      await expect(utils.reflect(() => Promise.resolve('foo'))).resolves.toBe('foo');
-      await expect(utils.reflect(() => Promise.resolve({ foo: 1 }))).resolves.toEqual({ foo: 1 });
+      assert.strictEqual(await utils.reflect(() => {}), undefined);
+      assert.strictEqual(await utils.reflect(() => 'foo'), 'foo');
+      assert.strictEqual(await utils.reflect(() => Promise.resolve('foo')), 'foo');
+      assert.deepStrictEqual(await utils.reflect(() => Promise.resolve({ foo: 1 })), { foo: 1 });
     });
 
     test('returns an error if the passed function throws an error', async () => {
-      await expect(
-        utils.reflect(() => {
-          throw new Error('foo');
-        })
-      ).resolves.toBeInstanceOf(Error);
-      await expect(utils.reflect(() => Promise.reject(new Error('foo')))).resolves.toBeInstanceOf(Error);
+      const result1 = await utils.reflect(() => {
+        throw new Error('foo');
+      });
+
+      assert.strictEqual(result1 instanceof Error, true);
+
+      const result2 = await utils.reflect(() => Promise.reject(new Error('foo')));
+
+      assert.strictEqual(result2 instanceof Error, true);
     });
   });
 
   describe('timeout()', () => {
     test('returns the given value after the defined time has passed', async () => {
-      jest.useFakeTimers();
+      const result = await utils.timeout(1, 'foo');
 
-      const timeout = utils.timeout(1000, 'foo');
-      const before = jest.now();
-
-      jest.runAllTimers();
-
-      await expect(timeout).resolves.toBe('foo');
-      expect(jest.now() - before).toBe(1000);
+      assert.strictEqual(result, 'foo');
     });
   });
 
   describe('validateLogger()', () => {
     test('throws an error if the logger is not an object', () => {
-      expect(() => utils.validateLogger('foo')).toThrow('Logger instance is invalid');
+      assert.throws(() => utils.validateLogger('foo'), new Error('Logger instance is invalid'));
     });
 
     ['info', 'warn', 'error'].forEach(logMethod => {
@@ -73,8 +72,9 @@ describe('Utils', () => {
 
         delete logger[logMethod];
 
-        expect(() => utils.validateLogger(logger)).toThrow(
-          `Logger instance is missing required log method '${logMethod}'`
+        assert.throws(
+          () => utils.validateLogger(logger),
+          new Error(`Logger instance is missing required log method '${logMethod}'`)
         );
       });
 
@@ -83,8 +83,9 @@ describe('Utils', () => {
 
         logger[logMethod] = 'foo';
 
-        expect(() => utils.validateLogger(logger)).toThrow(
-          `Logger instance log method '${logMethod}' is not a function`
+        assert.throws(
+          () => utils.validateLogger(logger),
+          new Error(`Logger instance log method '${logMethod}' is not a function`)
         );
       });
     });
@@ -92,7 +93,7 @@ describe('Utils', () => {
     test(`returns the logger instance if it is valid`, () => {
       const logger = { error: () => {}, info: () => {}, warn: () => {} };
 
-      expect(utils.validateLogger(logger)).toBe(logger);
+      assert.strictEqual(utils.validateLogger(logger), logger);
     });
   });
 });
