@@ -1,5 +1,11 @@
 # Changelog
 
+## [v4.4.0](https://github.com/uphold/process-manager/releases/tag/v4.4.0) (2026-01-05)
+
+- Update `release` workflow to use trusted OIDC publishing [\#56](https://github.com/uphold/process-manager/pull/56) ([risantos](https://github.com/risantos))
+- Update `release` workflow step order [\#55](https://github.com/uphold/process-manager/pull/55) ([risantos](https://github.com/risantos))
+- Update all dependencies, Node.js min to v20, replace `jest` with `node:test` [\#54](https://github.com/uphold/process-manager/pull/54) ([risantos](https://github.com/risantos))
+
 ## [v4.3.0](https://github.com/uphold/process-manager/releases/tag/v4.3.0) (2025-01-02)
 - Remove `DEBUG` check to fallback to console.error [\#53](https://github.com/uphold/process-manager/pull/53) ([satazor](https://github.com/satazor))
 - Print errors on each line [\#52](https://github.com/uphold/process-manager/pull/52) ([satazor](https://github.com/satazor))
