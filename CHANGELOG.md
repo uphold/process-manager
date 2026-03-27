@@ -1,5 +1,13 @@
 # Changelog
 
+## [v4.4.1](https://github.com/uphold/process-manager/releases/tag/v4.4.1) (2026-03-27)
+
+- Bump lodash from 4.17.21 to 4.17.23 [\#57](https://github.com/uphold/process-manager/pull/57) ([dependabot](https://github.com/apps/dependabot))
+- Bump basic-ftp from 5.1.0 to 5.2.0 [\#58](https://github.com/uphold/process-manager/pull/58) ([dependabot](https://github.com/apps/dependabot))
+- Bump minimatch from 3.1.2 to 3.1.5 [\#59](https://github.com/uphold/process-manager/pull/59) ([dependabot](https://github.com/apps/dependabot))
+- Bump flatted from 3.3.3 to 3.4.2 [\#60](https://github.com/uphold/process-manager/pull/60) ([dependabot](https://github.com/apps/dependabot))
+- Bump picomatch from 4.0.3 to 4.0.4 [\#61](https://github.com/uphold/process-manager/pull/61) ([dependabot](https://github.com/apps/dependabot))
+
 ## [v4.4.0](https://github.com/uphold/process-manager/releases/tag/v4.4.0) (2026-01-05)
 
 - Update `release` workflow to use trusted OIDC publishing [\#56](https://github.com/uphold/process-manager/pull/56) ([risantos](https://github.com/risantos))
