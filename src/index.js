@@ -85,7 +85,20 @@ class ProcessManager {
     }
 
     const promises = hooks.map(({ handler, timeoutError }) => {
-      return Promise.race([utils.reflect(handler, args), utils.timeout(this.timeout, timeoutError)]);
+      let timer = null;
+
+      const timeoutPromise = new Promise(resolve => {
+        timer = setTimeout(() => resolve(timeoutError), this.timeout);
+      });
+
+      return Promise.race([utils.reflect(handler, args), timeoutPromise]).then(result => {
+        // Stop the timeout timer once the race is settled, otherwise a handler that
+        // finishes early leaves a pending timer behind, keeping the event loop (and so
+        // the process) alive for up to `this.timeout` milliseconds.
+        clearTimeout(timer);
+
+        return result;
+      });
     });
 
     return Promise.all(promises).then(results => {
@@ -266,7 +279,11 @@ process.on('SIGINT', () => {
 process.on('SIGTERM', () => {
   processManager.log.warn('Caught SIGTERM');
 
-  processManager.shutdown();
+  // Escalate on a repeat signal, exactly as the `SIGINT` handler does. Without this, a task that
+  // never settles keeps `running.size > 0` forever, `shutdown()` returns early on every signal, and
+  // the process only stops when the container runtime escalates to `SIGKILL` — losing the
+  // `drain`/`disconnect`/`exit` hooks entirely.
+  processManager.shutdown({ force: processManager.terminating });
 });
 
 /**

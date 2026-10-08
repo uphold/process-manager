@@ -19,8 +19,8 @@
   "scripts": {
     "lint": "eslint",
     "release": "release-it",
-    "test": "node --test $(find test -name '*.test.js')",
-    "test:coverage": "node --test --experimental-test-coverage $(find test -name '*.test.js')"
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage"
   },
   "publishConfig": {
     "access": "public"
