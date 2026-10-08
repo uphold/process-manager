@@ -26,7 +26,7 @@ npm install '@uphold/process-manager' --save
 To use `process-manager` simply require it in your project.
 
 ```javascript
-const processManager = require('process-manager');
+const processManager = require('@uphold/process-manager');
 
 // async/await.
 processManager.once(async () => {
@@ -61,7 +61,7 @@ This lifecycle is used to loop over a given function.
 #### Example (`loop`)
 
 ```javascript
-const processManager = require('process-manager');
+const processManager = require('@uphold/process-manager');
 
 processManager.loop(
   async () => {
@@ -74,7 +74,7 @@ processManager.loop(
 You can also return an object with an `interval` property to override the next interval.
 
 ```javascript
-const processManager = require('process-manager');
+const processManager = require('@uphold/process-manager');
 
 processManager.loop(
   async () => {
@@ -97,7 +97,7 @@ This lifecycle is used to get a function suited for using with an event emitter.
 #### Example (`on`)
 
 ```javascript
-const processManager = require('process-manager');
+const processManager = require('@uphold/process-manager');
 
 async function handler(value) {
   console.log(await client.getInfo(value));
@@ -117,7 +117,7 @@ This lifecycle is used to a given function and exit.
 #### Example (`once`)
 
 ```javascript
-const processManager = require('process-manager');
+const processManager = require('@uphold/process-manager');
 
 processManager.once(async () => {
   await client.doWork();
@@ -128,18 +128,18 @@ processManager.once(async () => {
 
 This function can be called to trigger a process shutdown. If passed an error as an optional argument, it will save it to the errors array. This function will only start the shutdown process once, any extra calls will be ignored, although it will still save the error if one is passed.
 
-If called with `{ force: true }` it will skip waiting for running processes and immediately start disconnecting.
+If called with `{ force: true }` it will skip waiting for running processes and exit immediately. **No hook runs in this mode** — not `drain`, not `disconnect`, and not `exit`. Register reporters on the `exit` hook knowing they will be bypassed on a forced shutdown (which is what a second `SIGINT` or `SIGTERM` triggers).
 
 #### Arguments (`shutdown`)
 
 - `[args]` _(object)_: the arguments object.
 - `[args.error]` _(Error)_: an error to add to the errors array.
-- `[args.force]` _(Boolean)_: a boolean that forces the shutdown to skip waiting for running processes.
+- `[args.force]` _(Boolean)_: a boolean that forces the shutdown to skip waiting for running processes and bypass all shutdown hooks.
 
 #### Example (`shutdown`)
 
 ```javascript
-const processManager = require('process-manager');
+const processManager = require('@uphold/process-manager');
 
 processManager.shutdown({ error: new Error('Error') });
 ```
@@ -171,7 +171,7 @@ This function is used to add a hook for one of the types described above.
 - `[args.name='a handler']` _(string)_: identifies the hook.
 
 ```javascript
-const processManager = require('process-manager');
+const processManager = require('@uphold/process-manager');
 
 processManager.addHook({ handler: () => 'result', type: <hook-type> });
 processManager.addHook({ handler: () => Promise.resolve('result'), type: <hook-type> });
